@@ -31,10 +31,10 @@ La G3010 / G3110 no ofrece escaneo AirPrint (eSCL) ni responde BJNP por la red. 
 
 ### Instalar
 
-Descarga `dist/CanonScan-1.0.pkg` e instálalo. El paquete no está firmado, así que abre con clic derecho → **Abrir**, o en Terminal:
+Descarga `dist/CanonScan-0.1.pkg` e instálalo. El paquete no está firmado, así que abre con clic derecho → **Abrir**, o en Terminal:
 
 ```sh
-sudo installer -pkg CanonScan-1.0.pkg -target /
+sudo installer -pkg CanonScan-0.1.pkg -target /
 ```
 
 La app queda en `/Applications/CanonScan.app`. Al primer escaneo macOS pide permiso de **Red local**: acéptalo.
@@ -77,10 +77,10 @@ The G3010 / G3110 offers no AirPrint scanning (eSCL) and doesn't answer BJNP on 
 
 ### Install
 
-Download `dist/CanonScan-1.0.pkg` and install it. The package is unsigned, so open it with right-click → **Open**, or in Terminal:
+Download `dist/CanonScan-0.1.pkg` and install it. The package is unsigned, so open it with right-click → **Open**, or in Terminal:
 
 ```sh
-sudo installer -pkg CanonScan-1.0.pkg -target /
+sudo installer -pkg CanonScan-0.1.pkg -target /
 ```
 
 The app goes to `/Applications/CanonScan.app`. On the first scan macOS asks for **Local Network** permission: allow it.

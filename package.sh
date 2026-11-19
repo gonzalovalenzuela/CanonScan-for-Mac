@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "${0:A:h}"
 
-VERSION=1.0
+VERSION=0.1
 ID=cl.local.canonscan.pkg
 mkdir -p dist
 OUT="dist/CanonScan-$VERSION.pkg"
