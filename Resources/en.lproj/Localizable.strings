@@ -1,0 +1,73 @@
+/* Interfaz / Interface */
+"Escáner Canon" = "Canon Scanner";
+"Impresora" = "Printer";
+"Dirección IP" = "IP address";
+"Buscando en la red…" = "Searching the network…";
+"No se encontró ninguna Canon" = "No Canon printer found";
+"Buscar de nuevo" = "Search again";
+"IP manual" = "Manual IP";
+"Resolución" = "Resolution";
+"Modo" = "Mode";
+"Color" = "Color";
+"Gris" = "Gray";
+"Formato" = "Format";
+"Pon la hoja en el vidrio y presiona «Escanear página»." = "Place the page on the glass and press “Scan Page”.";
+"Borrar todo" = "Clear All";
+"Escanear página" = "Scan Page";
+"Agregar página" = "Add Page";
+"Guardar…" = "Save…";
+"Mover antes" = "Move earlier";
+"Mover después" = "Move later";
+"Eliminar página" = "Delete page";
+"Página %lld" = "Page %lld";
+
+/* Estado y guardado / Status and saving */
+"Conectando…" = "Connecting…";
+"Página %d lista" = "Page %d ready";
+"Escaneo %@" = "Scan %@";
+"Se guardará un archivo por página, numerado (-1, -2, …)." = "One file per page will be saved, numbered (-1, -2, …).";
+"Guardado: %@" = "Saved: %@";
+"No se pudo guardar: %@" = "Could not save: %@";
+"no se pudo leer la imagen escaneada" = "the scanned image could not be read";
+
+/* Escáner / Scanner */
+"Conectando con el escáner…" = "Connecting to the scanner…";
+"Escaneando…" = "Scanning…";
+"Recibiendo imagen… %@" = "Receiving image… %@";
+
+/* Errores / Errors */
+"No se pudo conectar con la impresora: %@" = "Could not connect to the printer: %@";
+"Respuesta HTTP inesperada: %@" = "Unexpected HTTP response: %@";
+"Error del escáner: %@" = "Scanner error: %@";
+"Tiempo de espera agotado: %@" = "Timed out: %@";
+"sin direcciones" = "no addresses";
+"envío fallido (%@)" = "send failed (%@)";
+"la impresora cerró la conexión" = "the printer closed the connection";
+"sin respuesta de la impresora" = "no response from the printer";
+"tamaño de bloque inválido" = "invalid chunk size";
+"delimitador de bloque inválido" = "invalid chunk delimiter";
+"%@ rechazado" = "%@ rejected";
+"Inicio de sesión" = "Session start";
+"Parámetros" = "Parameters";
+"Inicio de escaneo" = "Scan start";
+"Estado" = "Status";
+"Lectura de imagen" = "Image read";
+"la impresora no aceptó el modo escáner (¿está ocupada?)" = "the printer did not accept scanner mode (is it busy?)";
+"la impresora rechazó el trabajo de escaneo" = "the printer rejected the scan job";
+"la impresora rechazó el cambio de modo" = "the printer rejected the mode change";
+"estado inesperado 0x%02x" = "unexpected status 0x%02x";
+"el escáner no terminó de leer la página" = "the scanner did not finish reading the page";
+"bloque de imagen incompleto" = "incomplete image block";
+"bloque de imagen truncado" = "truncated image block";
+"la transferencia de la imagen no terminó" = "the image transfer did not finish";
+"la imagen recibida no es un JPEG válido" = "the received image is not a valid JPEG";
+
+/* Interfaz rediseñada / Redesigned interface */
+"Escaneo" = "Scan";
+"Guardar como" = "Save As";
+"Escribe la IP de la impresora" = "Enter the printer's IP";
+"Dirección manual" = "Manual address";
+"Lista para escanear" = "Ready to scan";
+"Prueba «Buscar de nuevo» o usa IP manual" = "Try “Search again” or use a manual IP";
+"Listo para escanear" = "Ready to Scan";
+"Páginas: %lld" = "Pages: %lld";
