@@ -1,8 +1,8 @@
 # CanonScan for Mac
 
-App de macOS para escanear por WiFi con impresoras Canon PIXMA G3010 / G3110, que en macOS 26 ya no funcionan con el driver oficial.
+App de macOS para escanear por WiFi o USB con impresoras Canon PIXMA G3010 / G3110, que en macOS 26 ya no funcionan con el driver oficial.
 
-macOS app to scan over Wi-Fi with Canon PIXMA G3010 / G3110 printers, which no longer work with the official driver on macOS 26.
+macOS app to scan over Wi-Fi or USB with Canon PIXMA G3010 / G3110 printers, which no longer work with the official driver on macOS 26.
 
 [Español](#español) · [English](#english)
 
@@ -14,43 +14,48 @@ macOS app to scan over Wi-Fi with Canon PIXMA G3010 / G3110 printers, which no l
 
 ### Por qué
 
-La G3010 / G3110 no ofrece escaneo AirPrint (eSCL) ni responde BJNP por la red. Escanea con **CHMP**, un protocolo de Canon sobre HTTP (puerto 80). CanonScan habla CHMP directamente: no necesita el driver de Canon, SANE, Python ni Homebrew.
+La G3010 / G3110 no ofrece escaneo AirPrint (eSCL) ni responde BJNP por la red. Escanea con **CHMP**, un protocolo de Canon sobre HTTP (puerto 80); por USB usa los mismos mensajes por los canales bulk de la interfaz del escáner. CanonScan habla ese protocolo directamente: no necesita el driver de Canon, SANE, Python ni Homebrew.
 
 ### Funciones
 
-- **Modos de un clic:** Documento, Foto, Personalizado y Unir (dos mitades de un original grande). Cada modo tiene sus propios ajustes (⌘,): resolución, color, formato, carpeta, nombre automático, subcarpeta por fecha y mostrar en Finder.
-- **Correcciones:** enderezar, recortar al documento o a la foto y PDF con texto buscable (OCR), con Vision de macOS.
-- Busca la impresora sola por Bonjour, o usa una IP manual.
-- **USB:** también escanea con la impresora conectada por cable, más rápido que por WiFi.
-- 150, 300 o 600 dpi, en color o gris.
-- Varias páginas en un solo PDF, con opción de reordenar y borrar.
-- Guarda en PDF, JPG o PNG.
-- **Escáner nativo de macOS (AirScan):** un puente en la barra de menú hace que la impresora aparezca en Captura de Imagen, Vista Previa y otras apps, también para otros equipos de tu red. Puede iniciarse con la sesión.
-- Interfaz en español e inglés (según el idioma de macOS).
-- App universal (Apple Silicon e Intel), macOS 13 o superior.
-
-### Limitaciones
-
-- Solo vidrio (sin alimentador). La app escanea A4 completo; por AirScan se recorta la zona elegida.
-- Por AirScan solo entrega JPEG; usa la app para PDF de varias páginas.
-- Probado con una G3110 (se anuncia como «G3010 series»). Otros modelos con CHMP podrían funcionar, sin garantía.
-- No es un driver oficial de Canon; el protocolo se obtuvo por ingeniería inversa.
+- **Conexión:** WiFi (la busca sola por Bonjour, o con IP manual) o **USB** (más rápido). Se elige en la lista de impresoras.
+- **Modos de un clic:** Documento, Foto, Personalizado y Unir (dos mitades de un original grande), cada uno con sus propios ajustes.
+- **Correcciones:** enderezar, recortar al documento o a la foto, y PDF con texto buscable (OCR), con Vision de macOS.
+- 150, 300 o 600 dpi, en color o gris. Guarda en PDF (también de varias páginas), JPG o PNG.
+- **Escáner nativo de macOS (AirScan):** un puente en la barra de menú hace que la impresora aparezca en Captura de Imagen, Vista Previa y otras apps, también para otros equipos de tu red.
+- Interfaz en español e inglés (según el idioma de macOS). App universal (Apple Silicon e Intel), macOS 13 o superior.
 
 ### Instalar
 
-1. Descarga `CanonScan-0.3.dmg` desde [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), ábrelo y arrastra **CanonScan** a **Aplicaciones**.
+1. Descarga el `.dmg` de la [última versión](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), ábrelo y arrastra **CanonScan** a **Aplicaciones**.
 2. La app no está firmada por Apple. La primera vez macOS la bloquea: ve a **Ajustes del Sistema → Privacidad y seguridad** y presiona **Abrir de todas formas**.
 3. Acepta el permiso de **Red local** (CanonScan y CanonScan Bridge lo piden una vez).
-4. Al abrirla por primera vez pregunta si el puente AirScan debe iniciarse con la sesión. Se puede cambiar en la barra lateral, sección *Compartir*.
+4. Al abrirla por primera vez pregunta si el puente AirScan debe iniciarse con la sesión.
 
 Para desinstalar, borra `CanonScan.app` (el puente va dentro).
+
+### Uso
+
+- **Escanear con un modo:** pon el original en el vidrio y presiona **Documento**, **Foto**, **Personalizado** o **Unir**. En PDF pregunta si quieres escanear otra página. Las páginas quedan en la ventana y el archivo se guarda según el modo.
+- **Ajustes de los modos:** engranaje o **⌘,**. Por modo: color, resolución, recortar, enderezar, formato, OCR, revisar antes de guardar, nombre de archivo, carpeta, subcarpeta por fecha y mostrar en Finder.
+- **Unir:** escanea la mitad izquierda; después gira el original 180° y escanea la otra mitad en la misma esquina.
+- **Escaneo manual:** elige resolución, color y formato en la barra lateral, presiona **Escanear página** (o **Agregar página**) y luego **Guardar…**.
+- **Desde otras apps:** con *Compartir como escáner de macOS* activado, abre **Captura de Imagen** o **Vista Previa → Archivo → Importar desde escáner** y elige la impresora. El ícono de la barra de menú muestra el estado del puente.
+
+### Limitaciones
+
+- Solo vidrio (sin alimentador).
+- Por AirScan entrega solo JPEG; para PDF de varias páginas usa la app.
+- Unir junta las dos mitades sin buscar la zona en común.
+- Probado con una G3110 (se anuncia como «G3010 series»). Otros modelos con CHMP podrían funcionar, sin garantía.
+- No es un driver oficial de Canon; el protocolo se obtuvo por ingeniería inversa.
 
 ### Compilar
 
 Requiere Xcode (Swift 5.9 o superior).
 
 ```sh
-./build.sh      # solo la app, en build/latest/
+./build.sh      # app y puente, en build/latest/
 ./package.sh    # app + .dmg en dist/ (se publica en Releases)
 ```
 
@@ -64,43 +69,48 @@ El cliente CHMP está portado a Swift desde [dfrancio-DF/canon-g3010-sane](https
 
 ### Why
 
-The G3010 / G3110 offers no AirPrint scanning (eSCL) and doesn't answer BJNP on the network. It scans with **CHMP**, a Canon protocol over HTTP (port 80). CanonScan speaks CHMP directly: no Canon driver, SANE, Python or Homebrew needed.
+The G3010 / G3110 offers no AirPrint scanning (eSCL) and doesn't answer BJNP on the network. It scans with **CHMP**, a Canon protocol over HTTP (port 80); over USB it uses the same messages through the scanner interface's bulk pipes. CanonScan speaks that protocol directly: no Canon driver, SANE, Python or Homebrew needed.
 
 ### Features
 
-- **One-click modes:** Document, Photo, Custom and Stitch (two halves of a large original). Each mode has its own settings (⌘,): resolution, color, format, folder, automatic name, date subfolder and show in Finder.
+- **Connection:** Wi-Fi (found automatically via Bonjour, or by manual IP) or **USB** (faster). Pick it in the printer list.
+- **One-click modes:** Document, Photo, Custom and Stitch (two halves of a large original), each with its own settings.
 - **Corrections:** straighten, crop to document or photo, and searchable text PDF (OCR), using macOS Vision.
-- Finds the printer automatically via Bonjour, or uses a manual IP.
-- **USB:** also scans with the printer connected by cable, faster than Wi-Fi.
-- 150, 300 or 600 dpi, color or gray.
-- Multiple pages in one PDF, with reordering and deleting.
-- Saves as PDF, JPG or PNG.
-- **Native macOS scanner (AirScan):** a menu bar bridge makes the printer show up in Image Capture, Preview and other apps, also for other devices on your network. It can start at login.
-- Spanish and English interface (follows the macOS language).
-- Universal app (Apple Silicon and Intel), macOS 13 or later.
-
-### Limitations
-
-- Flatbed only (no feeder). The app scans full A4; over AirScan the chosen region is cropped.
-- Over AirScan it only delivers JPEG; use the app for multi-page PDF.
-- Tested with a G3110 (it advertises itself as "G3010 series"). Other CHMP models may work, no guarantee.
-- Not an official Canon driver; the protocol was reverse-engineered.
+- 150, 300 or 600 dpi, color or gray. Saves as PDF (including multi-page), JPG or PNG.
+- **Native macOS scanner (AirScan):** a menu bar bridge makes the printer show up in Image Capture, Preview and other apps, also for other devices on your network.
+- Spanish and English interface (follows the macOS language). Universal app (Apple Silicon and Intel), macOS 13 or later.
 
 ### Install
 
-1. Download `CanonScan-0.3.dmg` from [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), open it and drag **CanonScan** to **Applications**.
+1. Download the `.dmg` from the [latest release](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), open it and drag **CanonScan** to **Applications**.
 2. The app isn't signed by Apple. The first time, macOS blocks it: go to **System Settings → Privacy & Security** and click **Open Anyway**.
 3. Allow **Local Network** access (CanonScan and CanonScan Bridge ask once).
-4. On first launch it asks whether the AirScan bridge should start at login. You can change it in the sidebar, *Sharing* section.
+4. On first launch it asks whether the AirScan bridge should start at login.
 
 To uninstall, delete `CanonScan.app` (the bridge is inside it).
+
+### Usage
+
+- **Scan with a mode:** place the original on the glass and press **Document**, **Photo**, **Custom** or **Stitch**. For PDF it asks whether to scan another page. Pages stay in the window and the file is saved according to the mode.
+- **Mode settings:** gear button or **⌘,**. Per mode: color, resolution, crop, straighten, format, OCR, review before saving, file name, folder, date subfolder and show in Finder.
+- **Stitch:** scan the left half; then turn the original 180° and scan the other half in the same corner.
+- **Manual scan:** choose resolution, color and format in the sidebar, press **Scan Page** (or **Add Page**) and then **Save…**.
+- **From other apps:** with *Share as a macOS scanner* on, open **Image Capture** or **Preview → File → Import from Scanner** and pick the printer. The menu bar icon shows the bridge status.
+
+### Limitations
+
+- Flatbed only (no feeder).
+- Over AirScan it only delivers JPEG; use the app for multi-page PDF.
+- Stitch joins both halves without looking for the overlapping area.
+- Tested with a G3110 (it advertises itself as "G3010 series"). Other CHMP models may work, no guarantee.
+- Not an official Canon driver; the protocol was reverse-engineered.
 
 ### Build
 
 Requires Xcode (Swift 5.9 or later).
 
 ```sh
-./build.sh      # app only, in build/latest/
+./build.sh      # app and bridge, in build/latest/
 ./package.sh    # app + .dmg in dist/ (published in Releases)
 ```
 
