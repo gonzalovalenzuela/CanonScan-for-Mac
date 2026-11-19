@@ -6,7 +6,7 @@ macOS app to scan over Wi-Fi or USB with Canon PIXMA G3010 / G3110 printers, whi
 
 [Español](#español) · [English](#english)
 
-<p align="center"><img src="docs/screenshot.png" alt="CanonScan for Mac" width="720"></p>
+<p align="center"><img src="docs/screenshot-usb.png" alt="CanonScan for Mac" width="720"></p>
 
 ---
 
