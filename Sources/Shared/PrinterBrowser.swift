@@ -18,6 +18,7 @@ final class PrinterBrowser: ObservableObject {
 
     private var browser: NWBrowser?
     private var resolving: [String: NWConnection] = [:]
+    private var usbTimer: Timer?
     private let queue = DispatchQueue(label: "cl.local.canonscan.browser")
 
     func start() {
@@ -35,6 +36,12 @@ final class PrinterBrowser: ObservableObject {
         }
         b.start(queue: queue)
         browser = b
+        // Impresoras por USB: al inicio y cada 3 s (conectar/desconectar el cable).
+        // USB printers: at start and every 3 s (plugging/unplugging the cable).
+        refreshUSB()
+        usbTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.refreshUSB() }
+        }
         // Deja de mostrar "buscando" después de unos segundos / Stop "searching" after a few seconds
         Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 6_000_000_000)
@@ -43,10 +50,21 @@ final class PrinterBrowser: ObservableObject {
     }
 
     func stop() {
+        usbTimer?.invalidate()
+        usbTimer = nil
         browser?.cancel()
         browser = nil
         resolving.values.forEach { $0.cancel() }
         resolving.removeAll()
+    }
+
+    /// USB primero en la lista, luego las de red / USB first in the list, then network ones
+    private func refreshUSB() {
+        let usb = USBTransport.connectedPrinters().map {
+            FoundPrinter(id: "usb-\($0.locationID)", name: "\($0.name) (USB)", host: CHMPClient.usbHost)
+        }
+        let updated = usb + printers.filter { $0.host != CHMPClient.usbHost }
+        if updated != printers { printers = updated }
     }
 
     private func handle(_ results: Set<NWBrowser.Result>) {

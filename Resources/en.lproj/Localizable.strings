@@ -120,3 +120,8 @@
 "Después de guardar" = "After saving";
 "Mostrar en Finder" = "Show in Finder";
 "Restaurar valores" = "Restore Defaults";
+
+/* USB */
+"no hay una impresora Canon conectada por USB" = "no Canon printer is connected over USB";
+"no se pudo abrir el escáner USB (¿lo está usando otra app?)" = "couldn't open the USB scanner (is another app using it?)";
+"el escáner USB no tiene los canales esperados" = "the USB scanner doesn't have the expected pipes";

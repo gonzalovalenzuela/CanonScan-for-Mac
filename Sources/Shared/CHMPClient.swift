@@ -42,13 +42,22 @@ final class CHMPClient {
     private static let endpoint = "/canon/ij/command2/port3"
     private static let chmpVersion = "1.4.0"
 
+    /// Host especial para usar la impresora conectada por USB.
+    /// Special host to use the USB-connected printer.
+    static let usbHost = "usb"
+
     private let host: String
     private var fd: Int32 = -1
     private var buffer = [UInt8]()   // bytes leídos y aún no consumidos / read-ahead bytes
+    private var usb: USBTransport?
 
     init(host: String, timeout: TimeInterval = 30) throws {
         self.host = host
-        try connect(timeout: timeout)
+        if host == Self.usbHost {
+            usb = try USBTransport()
+        } else {
+            try connect(timeout: timeout)
+        }
     }
 
     deinit { close() }
@@ -74,6 +83,8 @@ final class CHMPClient {
 
     func close() {
         if fd >= 0 { Darwin.close(fd); fd = -1 }
+        usb?.close()
+        usb = nil
     }
 
     // MARK: - Socket
@@ -234,6 +245,11 @@ final class CHMPClient {
 
     /// Envía un comando y lee su respuesta / Send a command and read its reply
     private func exchange(_ body: [UInt8]) throws -> [UInt8] {
+        if let usb {
+            // El saludo de un byte es solo de CHMP / The one-byte handshake is CHMP-only
+            if body == [0x00] { return [] }
+            return try usb.exchange(body)
+        }
         try post(body)
         return try get()
     }
