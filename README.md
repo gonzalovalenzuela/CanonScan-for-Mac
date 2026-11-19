@@ -22,24 +22,25 @@ La G3010 / G3110 no ofrece escaneo AirPrint (eSCL) ni responde BJNP por la red. 
 - 150, 300 o 600 dpi, en color o gris.
 - Varias páginas en un solo PDF, con opción de reordenar y borrar.
 - Guarda en PDF, JPG o PNG.
+- **Escáner nativo de macOS (AirScan):** un puente en la barra de menú hace que la impresora aparezca en Captura de Imagen, Vista Previa y otras apps, también para otros equipos de tu red. Puede iniciarse con la sesión.
 - Interfaz en español e inglés (según el idioma de macOS).
 - App universal (Apple Silicon e Intel), macOS 13 o superior.
 
 ### Limitaciones
 
-- Solo vidrio (sin alimentador), página A4 completa.
+- Solo vidrio (sin alimentador). La app escanea A4 completo; por AirScan se recorta la zona elegida.
+- Por AirScan solo entrega JPEG; usa la app para PDF de varias páginas.
 - Probado con una G3110 (se anuncia como «G3010 series»). Otros modelos con CHMP podrían funcionar, sin garantía.
 - No es un driver oficial de Canon; el protocolo se obtuvo por ingeniería inversa.
 
 ### Instalar
 
-Descarga `dist/CanonScan-0.1.pkg` e instálalo. El paquete no está firmado, así que abre con clic derecho → **Abrir**, o en Terminal:
+1. Descarga `dist/CanonScan-0.1.dmg`, ábrelo y arrastra **CanonScan** a **Aplicaciones**.
+2. La app no está firmada por Apple. La primera vez macOS la bloquea: ve a **Ajustes del Sistema → Privacidad y seguridad** y presiona **Abrir de todas formas**.
+3. Acepta el permiso de **Red local** (CanonScan y CanonScan Bridge lo piden una vez).
+4. Al abrirla por primera vez pregunta si el puente AirScan debe iniciarse con la sesión. Se puede cambiar en la barra lateral, sección *Compartir*.
 
-```sh
-sudo installer -pkg CanonScan-0.1.pkg -target /
-```
-
-La app queda en `/Applications/CanonScan.app`. Al primer escaneo macOS pide permiso de **Red local**: acéptalo.
+Para desinstalar, borra `CanonScan.app` (el puente va dentro).
 
 ### Compilar
 
@@ -47,7 +48,7 @@ Requiere Xcode (Swift 5.9 o superior).
 
 ```sh
 ./build.sh      # solo la app, en build/latest/
-./package.sh    # app + instalador en dist/
+./package.sh    # app + .dmg en dist/
 ```
 
 ### Créditos
@@ -68,24 +69,25 @@ The G3010 / G3110 offers no AirPrint scanning (eSCL) and doesn't answer BJNP on 
 - 150, 300 or 600 dpi, color or gray.
 - Multiple pages in one PDF, with reordering and deleting.
 - Saves as PDF, JPG or PNG.
+- **Native macOS scanner (AirScan):** a menu bar bridge makes the printer show up in Image Capture, Preview and other apps, also for other devices on your network. It can start at login.
 - Spanish and English interface (follows the macOS language).
 - Universal app (Apple Silicon and Intel), macOS 13 or later.
 
 ### Limitations
 
-- Flatbed only (no feeder), full A4 page.
+- Flatbed only (no feeder). The app scans full A4; over AirScan the chosen region is cropped.
+- Over AirScan it only delivers JPEG; use the app for multi-page PDF.
 - Tested with a G3110 (it advertises itself as "G3010 series"). Other CHMP models may work, no guarantee.
 - Not an official Canon driver; the protocol was reverse-engineered.
 
 ### Install
 
-Download `dist/CanonScan-0.1.pkg` and install it. The package is unsigned, so open it with right-click → **Open**, or in Terminal:
+1. Download `dist/CanonScan-0.1.dmg`, open it and drag **CanonScan** to **Applications**.
+2. The app isn't signed by Apple. The first time, macOS blocks it: go to **System Settings → Privacy & Security** and click **Open Anyway**.
+3. Allow **Local Network** access (CanonScan and CanonScan Bridge ask once).
+4. On first launch it asks whether the AirScan bridge should start at login. You can change it in the sidebar, *Sharing* section.
 
-```sh
-sudo installer -pkg CanonScan-0.1.pkg -target /
-```
-
-The app goes to `/Applications/CanonScan.app`. On the first scan macOS asks for **Local Network** permission: allow it.
+To uninstall, delete `CanonScan.app` (the bridge is inside it).
 
 ### Build
 
@@ -93,7 +95,7 @@ Requires Xcode (Swift 5.9 or later).
 
 ```sh
 ./build.sh      # app only, in build/latest/
-./package.sh    # app + installer in dist/
+./package.sh    # app + .dmg in dist/
 ```
 
 ### Credits

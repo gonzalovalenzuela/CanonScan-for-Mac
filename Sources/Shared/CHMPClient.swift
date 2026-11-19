@@ -15,9 +15,13 @@ enum CHMPError: LocalizedError {
     case http(String)
     case protocolError(String)
     case timeout(String)
+    /// La impresora está ocupada (p. ej. el cabezal vuelve tras otro escaneo).
+    /// The printer is busy (e.g. the carriage is returning after another scan).
+    case busy
 
     var errorDescription: String? {
         switch self {
+        case .busy: return L("La impresora está ocupada. Intenta de nuevo en unos segundos.")
         case .connection(let m): return L("No se pudo conectar con la impresora: %@", m)
         case .http(let m): return L("Respuesta HTTP inesperada: %@", m)
         case .protocolError(let m): return L("Error del escáner: %@", m)
@@ -48,6 +52,25 @@ final class CHMPClient {
     }
 
     deinit { close() }
+
+    /// Escanea con conexión nueva y reintenta si la impresora está ocupada.
+    /// Scans on a fresh connection and retries while the printer is busy.
+    static func scan(host: String, settings: ScanSettings, attempts: Int = 4,
+                     shouldContinue: () -> Bool = { true },
+                     progress: (String) -> Void) throws -> Data {
+        var attempt = 1
+        while true {
+            do {
+                let client = try CHMPClient(host: host)
+                defer { client.close() }
+                return try client.scan(settings, progress: progress)
+            } catch CHMPError.busy where attempt < attempts && shouldContinue() {
+                progress(L("La impresora está ocupada, reintentando…"))
+                Thread.sleep(forTimeInterval: 4)
+                attempt += 1
+            }
+        }
+    }
 
     func close() {
         if fd >= 0 { Darwin.close(fd); fd = -1 }
@@ -314,7 +337,7 @@ final class CHMPClient {
         }
         _ = try exchange(Self.cmdCapability)
         guard Self.containsOK(try exchange(Self.xmlStartJob)) else {
-            throw CHMPError.protocolError(L("la impresora rechazó el trabajo de escaneo"))
+            throw CHMPError.busy   // suele estar terminando otro trabajo / usually finishing another job
         }
         guard Self.containsOK(try exchange(Self.xmlModeShift(jobID: "00000001"))) else {
             throw CHMPError.protocolError(L("la impresora rechazó el cambio de modo"))
@@ -333,7 +356,9 @@ final class CHMPClient {
             try Self.requireOK(r, "Estado")
             let state = r.count > 8 ? r[8] : 0xFF
             if state == 0x03 { break }
-            guard state == 0x00 || state == 0x02 else {
+            if state == 0x04 { throw CHMPError.busy }   // ocupada / busy
+            // 0x00 esperando, 0x01 preparando, 0x02 leyendo / 0x00 waiting, 0x01 preparing, 0x02 reading
+            guard state <= 0x02 else {
                 throw CHMPError.protocolError(L("estado inesperado 0x%02x", state))
             }
             if Date() > readyDeadline { throw CHMPError.timeout(L("el escáner no terminó de leer la página")) }

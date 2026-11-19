@@ -53,7 +53,6 @@
 "Estado" = "Status";
 "Lectura de imagen" = "Image read";
 "la impresora no aceptó el modo escáner (¿está ocupada?)" = "the printer did not accept scanner mode (is it busy?)";
-"la impresora rechazó el trabajo de escaneo" = "the printer rejected the scan job";
 "la impresora rechazó el cambio de modo" = "the printer rejected the mode change";
 "estado inesperado 0x%02x" = "unexpected status 0x%02x";
 "el escáner no terminó de leer la página" = "the scanner did not finish reading the page";
@@ -71,3 +70,20 @@
 "Prueba «Buscar de nuevo» o usa IP manual" = "Try “Search again” or use a manual IP";
 "Listo para escanear" = "Ready to Scan";
 "Páginas: %lld" = "Pages: %lld";
+
+/* Puente AirScan / AirScan bridge */
+"La impresora está ocupada. Intenta de nuevo en unos segundos." = "The printer is busy. Try again in a few seconds.";
+"La impresora está ocupada, reintentando…" = "The printer is busy, retrying…";
+"Compartir" = "Sharing";
+"Compartir como escáner de macOS" = "Share as a macOS scanner";
+"Iniciar al iniciar sesión" = "Start at login";
+"Falta aprobarlo en Ajustes del Sistema." = "Needs approval in System Settings.";
+"Abrir" = "Open";
+"¿Iniciar el puente AirScan al iniciar sesión?" = "Start the AirScan bridge at login?";
+"Ahora no" = "Not now";
+"El puente hace que la impresora aparezca como escáner en Captura de Imagen y Vista Previa, también para otros equipos de tu red. Puedes cambiarlo después en la barra lateral." = "The bridge makes the printer show up as a scanner in Image Capture and Preview, also for other devices on your network. You can change this later in the sidebar.";
+"Puente apagado" = "Bridge off";
+"Buscando impresora…" = "Looking for the printer…";
+"Compartiendo «%@»" = "Sharing “%@”";
+"Abrir CanonScan" = "Open CanonScan";
+"Salir del puente" = "Quit Bridge";

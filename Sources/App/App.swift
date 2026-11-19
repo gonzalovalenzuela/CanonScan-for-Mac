@@ -6,12 +6,14 @@ import SwiftUI
 @main
 struct CanonScanApp: App {
     @StateObject private var model = ScanModel()
+    @StateObject private var bridge = BridgeSettings()
 
     var body: some Scene {
         WindowGroup("Escáner Canon") {
             ContentView()
                 .environmentObject(model)
                 .environmentObject(model.browser)
+                .environmentObject(bridge)
                 .frame(minWidth: 860, minHeight: 640)
         }
         .windowResizability(.contentMinSize)
@@ -27,6 +29,7 @@ extension Color {
 
 struct ContentView: View {
     @EnvironmentObject var model: ScanModel
+    @EnvironmentObject var bridge: BridgeSettings
     @EnvironmentObject var browser: PrinterBrowser
 
     var body: some View {
@@ -39,6 +42,12 @@ struct ContentView: View {
         .tint(.scanAccent)
         .toolbar { toolbar }
         .onAppear { browser.start() }
+        .alert("¿Iniciar el puente AirScan al iniciar sesión?", isPresented: $bridge.askLaunchAtLogin) {
+            Button("Iniciar al iniciar sesión") { bridge.answerLaunchAtLogin(true) }
+            Button("Ahora no", role: .cancel) { bridge.answerLaunchAtLogin(false) }
+        } message: {
+            Text("El puente hace que la impresora aparezca como escáner en Captura de Imagen y Vista Previa, también para otros equipos de tu red. Puedes cambiarlo después en la barra lateral.")
+        }
         .alert("Error", isPresented: Binding(
             get: { model.errorMessage != nil },
             set: { if !$0 { model.errorMessage = nil } }
@@ -81,6 +90,7 @@ struct ContentView: View {
 
 struct Sidebar: View {
     @EnvironmentObject var model: ScanModel
+    @EnvironmentObject var bridge: BridgeSettings
     @EnvironmentObject var browser: PrinterBrowser
 
     var body: some View {
@@ -144,6 +154,25 @@ struct Sidebar: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
+                }
+            }
+
+            Section("Compartir") {
+                Toggle("Compartir como escáner de macOS", isOn: $bridge.sharing)
+                    .toggleStyle(.switch)
+                Toggle("Iniciar al iniciar sesión", isOn: Binding(
+                    get: { bridge.launchAtLogin },
+                    set: { bridge.setLaunchAtLogin($0) }
+                ))
+                .toggleStyle(.switch)
+                if bridge.needsApproval {
+                    HStack {
+                        Text("Falta aprobarlo en Ajustes del Sistema.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Abrir") { bridge.openLoginItemsSettings() }
+                            .controlSize(.small)
+                    }
                 }
             }
         }

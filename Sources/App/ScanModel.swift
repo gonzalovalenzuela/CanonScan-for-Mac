@@ -31,9 +31,12 @@ final class ScanModel: ObservableObject {
     @Published var dpi = 300
     @Published var grayscale = false
     @Published var format: OutputFormat = .pdf
-    @Published var useManualHost = false
+    // Se guardan y se avisan al puente / Saved and announced to the bridge
+    @Published var useManualHost: Bool {
+        didSet { UserDefaults.standard.set(useManualHost, forKey: "useManualHost"); SharedSettings.notifyChange() }
+    }
     @Published var manualHost: String {
-        didSet { UserDefaults.standard.set(manualHost, forKey: "manualHost") }
+        didSet { UserDefaults.standard.set(manualHost, forKey: "manualHost"); SharedSettings.notifyChange() }
     }
     @Published var selectedPrinterID: String?
 
@@ -46,6 +49,7 @@ final class ScanModel: ObservableObject {
     let browser = PrinterBrowser()
 
     init() {
+        useManualHost = UserDefaults.standard.bool(forKey: "useManualHost")
         manualHost = UserDefaults.standard.string(forKey: "manualHost") ?? ""
     }
 
@@ -68,11 +72,9 @@ final class ScanModel: ObservableObject {
 
         Task.detached(priority: .userInitiated) {
             do {
-                let client = try CHMPClient(host: host)
-                let jpeg = try client.scan(settings) { msg in
+                let jpeg = try CHMPClient.scan(host: host, settings: settings) { msg in
                     Task { @MainActor in self.status = msg }
                 }
-                client.close()
                 guard let page = Self.makePage(jpeg: jpeg, settings: settings) else {
                     throw CHMPError.protocolError(L("no se pudo leer la imagen escaneada"))
                 }
@@ -94,22 +96,10 @@ final class ScanModel: ObservableObject {
     /// Decodifica el JPEG; en modo gris lo convierte a un canal real.
     /// Decodes the JPEG; in gray mode converts it to a true single channel.
     nonisolated private static func makePage(jpeg: Data, settings: ScanSettings) -> ScannedPage? {
-        guard let src = CGImageSourceCreateWithData(jpeg as CFData, nil),
-              var img = CGImageSourceCreateImageAtIndex(src, 0, nil) else { return nil }
-        if settings.grayscale, img.colorSpace?.model != .monochrome, let gray = toGray(img) {
-            img = gray
-        }
+        guard var img = ImageTools.decode(jpeg) else { return nil }
+        if settings.grayscale, let gray = ImageTools.toGray(img) { img = gray }
         let thumb = NSImage(cgImage: img, size: NSSize(width: img.width, height: img.height))
         return ScannedPage(image: img, dpi: settings.dpi, thumbnail: thumb)
-    }
-
-    nonisolated private static func toGray(_ img: CGImage) -> CGImage? {
-        guard let ctx = CGContext(data: nil, width: img.width, height: img.height,
-                                  bitsPerComponent: 8, bytesPerRow: 0,
-                                  space: CGColorSpace(name: CGColorSpace.genericGrayGamma2_2)!,
-                                  bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return nil }
-        ctx.draw(img, in: CGRect(x: 0, y: 0, width: img.width, height: img.height))
-        return ctx.makeImage()
     }
 
     func remove(_ page: ScannedPage) {
