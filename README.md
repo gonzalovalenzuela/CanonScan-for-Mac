@@ -37,7 +37,7 @@ La G3010 / G3110 no ofrece escaneo AirPrint (eSCL) ni responde BJNP por la red. 
 
 ### Instalar
 
-1. Descarga `CanonScan-0.1.dmg` desde [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), ábrelo y arrastra **CanonScan** a **Aplicaciones**.
+1. Descarga `CanonScan-0.2.dmg` desde [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), ábrelo y arrastra **CanonScan** a **Aplicaciones**.
 2. La app no está firmada por Apple. La primera vez macOS la bloquea: ve a **Ajustes del Sistema → Privacidad y seguridad** y presiona **Abrir de todas formas**.
 3. Acepta el permiso de **Red local** (CanonScan y CanonScan Bridge lo piden una vez).
 4. Al abrirla por primera vez pregunta si el puente AirScan debe iniciarse con la sesión. Se puede cambiar en la barra lateral, sección *Compartir*.
@@ -86,7 +86,7 @@ The G3010 / G3110 offers no AirPrint scanning (eSCL) and doesn't answer BJNP on 
 
 ### Install
 
-1. Download `CanonScan-0.1.dmg` from [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), open it and drag **CanonScan** to **Applications**.
+1. Download `CanonScan-0.2.dmg` from [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), open it and drag **CanonScan** to **Applications**.
 2. The app isn't signed by Apple. The first time, macOS blocks it: go to **System Settings → Privacy & Security** and click **Open Anyway**.
 3. Allow **Local Network** access (CanonScan and CanonScan Bridge ask once).
 4. On first launch it asks whether the AirScan bridge should start at login. You can change it in the sidebar, *Sharing* section.
