@@ -21,6 +21,7 @@ La G3010 / G3110 no ofrece escaneo AirPrint (eSCL) ni responde BJNP por la red. 
 - **Modos de un clic:** Documento, Foto, Personalizado y Unir (dos mitades de un original grande). Cada modo tiene sus propios ajustes (⌘,): resolución, color, formato, carpeta, nombre automático, subcarpeta por fecha y mostrar en Finder.
 - **Correcciones:** enderezar, recortar al documento o a la foto y PDF con texto buscable (OCR), con Vision de macOS.
 - Busca la impresora sola por Bonjour, o usa una IP manual.
+- **USB:** también escanea con la impresora conectada por cable, más rápido que por WiFi.
 - 150, 300 o 600 dpi, en color o gris.
 - Varias páginas en un solo PDF, con opción de reordenar y borrar.
 - Guarda en PDF, JPG o PNG.
@@ -37,7 +38,7 @@ La G3010 / G3110 no ofrece escaneo AirPrint (eSCL) ni responde BJNP por la red. 
 
 ### Instalar
 
-1. Descarga `CanonScan-0.2.dmg` desde [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), ábrelo y arrastra **CanonScan** a **Aplicaciones**.
+1. Descarga `CanonScan-0.3.dmg` desde [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), ábrelo y arrastra **CanonScan** a **Aplicaciones**.
 2. La app no está firmada por Apple. La primera vez macOS la bloquea: ve a **Ajustes del Sistema → Privacidad y seguridad** y presiona **Abrir de todas formas**.
 3. Acepta el permiso de **Red local** (CanonScan y CanonScan Bridge lo piden una vez).
 4. Al abrirla por primera vez pregunta si el puente AirScan debe iniciarse con la sesión. Se puede cambiar en la barra lateral, sección *Compartir*.
@@ -70,6 +71,7 @@ The G3010 / G3110 offers no AirPrint scanning (eSCL) and doesn't answer BJNP on 
 - **One-click modes:** Document, Photo, Custom and Stitch (two halves of a large original). Each mode has its own settings (⌘,): resolution, color, format, folder, automatic name, date subfolder and show in Finder.
 - **Corrections:** straighten, crop to document or photo, and searchable text PDF (OCR), using macOS Vision.
 - Finds the printer automatically via Bonjour, or uses a manual IP.
+- **USB:** also scans with the printer connected by cable, faster than Wi-Fi.
 - 150, 300 or 600 dpi, color or gray.
 - Multiple pages in one PDF, with reordering and deleting.
 - Saves as PDF, JPG or PNG.
@@ -86,7 +88,7 @@ The G3010 / G3110 offers no AirPrint scanning (eSCL) and doesn't answer BJNP on 
 
 ### Install
 
-1. Download `CanonScan-0.2.dmg` from [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), open it and drag **CanonScan** to **Applications**.
+1. Download `CanonScan-0.3.dmg` from [Releases](https://github.com/gonzalovalenzuela/CanonScan-for-Mac/releases/latest), open it and drag **CanonScan** to **Applications**.
 2. The app isn't signed by Apple. The first time, macOS blocks it: go to **System Settings → Privacy & Security** and click **Open Anyway**.
 3. Allow **Local Network** access (CanonScan and CanonScan Bridge ask once).
 4. On first launch it asks whether the AirScan bridge should start at login. You can change it in the sidebar, *Sharing* section.
