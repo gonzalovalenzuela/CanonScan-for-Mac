@@ -18,6 +18,11 @@ struct CanonScanApp: App {
         }
         .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unified)
+
+        // Ajustes de los modos (⌘,) / Mode settings (⌘,)
+        Settings {
+            ModeSettingsView().environmentObject(model.modes)
+        }
     }
 }
 
@@ -286,6 +291,7 @@ struct PagesView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .top) { ModeBar() }
         .safeAreaInset(edge: .bottom) { StatusBar() }
         .navigationTitle("Escáner Canon")
         .navigationSubtitle(model.pages.isEmpty ? "" : L("Páginas: %lld", model.pages.count))

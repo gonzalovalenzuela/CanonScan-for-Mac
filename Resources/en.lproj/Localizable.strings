@@ -87,3 +87,36 @@
 "Compartiendo «%@»" = "Sharing “%@”";
 "Abrir CanonScan" = "Open CanonScan";
 "Salir del puente" = "Quit Bridge";
+
+/* Modos de escaneo / Scan modes */
+"Documento" = "Document";
+"Foto" = "Photo";
+"Personalizado" = "Custom";
+"Unir" = "Stitch";
+"Ajustes de los modos…" = "Mode Settings…";
+"Escanear" = "Scan";
+"Escanear otra" = "Scan Another";
+"Terminar" = "Finish";
+"Cancelar" = "Cancel";
+"¿Escanear otra página para el mismo PDF?" = "Scan another page for the same PDF?";
+"Unir: primera mitad" = "Stitch: first half";
+"Unir: segunda mitad" = "Stitch: second half";
+"Pon la mitad izquierda del original sobre el vidrio, alineada con la esquina." = "Place the left half of the original on the glass, aligned with the corner.";
+"Gira el original 180° y pon la otra mitad en la misma esquina." = "Turn the original 180° and place the other half in the same corner.";
+"Escanea dos mitades: la segunda con el original girado 180°." = "Scans two halves: the second with the original turned 180°.";
+"Uniendo…" = "Stitching…";
+"Reconociendo texto…" = "Recognizing text…";
+"Guardando…" = "Saving…";
+"Recortar al documento" = "Crop to document";
+"Recortar a la foto" = "Crop to photo";
+"Enderezar" = "Straighten";
+"Guardar" = "Save";
+"PDF con texto buscable (OCR)" = "Searchable text PDF (OCR)";
+"Revisar antes de guardar" = "Review before saving";
+"Nombre de archivo" = "File name";
+"Guardar en" = "Save in";
+"Cambiar…" = "Change…";
+"Guardar en subcarpeta con la fecha" = "Save in a subfolder with the date";
+"Después de guardar" = "After saving";
+"Mostrar en Finder" = "Show in Finder";
+"Restaurar valores" = "Restore Defaults";
