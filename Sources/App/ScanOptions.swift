@@ -49,6 +49,29 @@ enum ColorMode: String, CaseIterable, Codable, Identifiable {
     var scansGray: Bool { self != .color }
 }
 
+/// Calidad de las imágenes dentro del PDF / Quality of images inside the PDF
+enum PDFQuality: String, CaseIterable, Codable, Identifiable {
+    case maximum, high, normal, small
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .maximum: return L("Máxima")
+        case .high: return L("Alta")
+        case .normal: return L("Normal")
+        case .small: return L("Pequeño")
+        }
+    }
+    /// Calidad JPEG dentro del PDF / JPEG quality inside the PDF
+    var jpegQuality: Double {
+        switch self {
+        case .maximum: return 0.95
+        case .high: return 0.8
+        case .normal: return 0.6
+        case .small: return 0.4
+        }
+    }
+}
+
 /// Zona en mm desde la esquina del vidrio / Region in mm from the glass corner
 struct ScanRegion: Equatable, Codable {
     var x: Double, y: Double, w: Double, h: Double

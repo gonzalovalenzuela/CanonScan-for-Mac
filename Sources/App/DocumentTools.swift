@@ -157,19 +157,37 @@ enum DocumentTools {
 
     /// Escribe un PDF; con `ocr`, agrega una capa de texto invisible y buscable.
     /// Writes a PDF; with `ocr`, adds an invisible, searchable text layer.
-    static func writePDF(pages: [(image: CGImage, dpi: Int)], to url: URL, ocr: Bool) throws {
+    static func writePDF(pages: [(image: CGImage, dpi: Int)], to url: URL, ocr: Bool,
+                         quality: PDFQuality = .high, password: String? = nil) throws {
+        var info: [CFString: Any] = [kCGPDFContextCreator: "CanonScan"]
+        if let password, !password.isEmpty {
+            // Contraseña para abrir; la de propietario igual / Password to open; owner password the same
+            info[kCGPDFContextUserPassword] = password
+            info[kCGPDFContextOwnerPassword] = password
+        }
         guard let consumer = CGDataConsumer(url: url as CFURL),
-              let ctx = CGContext(consumer: consumer, mediaBox: nil, nil) else { throw CocoaError(.fileWriteUnknown) }
+              let ctx = CGContext(consumer: consumer, mediaBox: nil, info as CFDictionary)
+        else { throw CocoaError(.fileWriteUnknown) }
         for p in pages {
             // Tamaño físico: píxeles × 72 / dpi / Physical size: px × 72 / dpi
             var box = CGRect(x: 0, y: 0, width: CGFloat(p.image.width) * 72 / CGFloat(p.dpi),
                              height: CGFloat(p.image.height) * 72 / CGFloat(p.dpi))
             ctx.beginPage(mediaBox: &box)
-            ctx.draw(p.image, in: box)
+            ctx.draw(jpegBacked(p.image, quality: quality.jpegQuality), in: box)
             if ocr { drawInvisibleText(for: p.image, in: box, ctx) }
             ctx.endPage()
         }
         ctx.closePDF()
+    }
+
+    /// Imagen respaldada por JPEG: el PDF la guarda comprimida tal cual (1 bit queda igual).
+    /// JPEG-backed image: the PDF stores it compressed as is (1-bit stays unchanged).
+    private static func jpegBacked(_ img: CGImage, quality: Double) -> CGImage {
+        guard img.bitsPerPixel > 1, let data = ImageTools.jpeg(img, dpi: 72, quality: quality),
+              let provider = CGDataProvider(data: data as CFData),
+              let jpg = CGImage(jpegDataProviderSource: provider, decode: nil, shouldInterpolate: true,
+                                intent: .defaultIntent) else { return img }
+        return jpg
     }
 
     private static func drawInvisibleText(for img: CGImage, in box: CGRect, _ ctx: CGContext) {

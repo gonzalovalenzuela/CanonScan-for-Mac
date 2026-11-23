@@ -64,6 +64,12 @@ struct ModeSettings: Codable, Equatable {
     var reviewBeforeSave = false
     var showInFinder = true
     var adjust = ImageAdjust()
+    var pdfQuality: PDFQuality = .high
+    /// Pedir contraseña al guardar el PDF / Ask for a password when saving the PDF
+    var pdfPassword = false
+    var openWithApp = false
+    var openAppPath = "/System/Applications/Preview.app"
+    var attachToMail = false
 
     init() {}
 
@@ -77,6 +83,8 @@ struct ModeSettings: Codable, Equatable {
         get(.ocr, &ocr); get(.deskew, &deskew); get(.cropToDocument, &cropToDocument)
         get(.fileName, &fileName); get(.saveFolder, &saveFolder); get(.dateSubfolder, &dateSubfolder)
         get(.reviewBeforeSave, &reviewBeforeSave); get(.showInFinder, &showInFinder); get(.adjust, &adjust)
+        get(.pdfQuality, &pdfQuality); get(.pdfPassword, &pdfPassword); get(.openWithApp, &openWithApp)
+        get(.openAppPath, &openAppPath); get(.attachToMail, &attachToMail)
         // Versión 0.2–0.3 guardaba «grayscale» / Versions 0.2–0.3 saved "grayscale"
         if let legacy = try? decoder.container(keyedBy: LegacyKeys.self),
            let gray = try? legacy.decode(Bool.self, forKey: .grayscale), gray, !c.contains(.colorMode) {

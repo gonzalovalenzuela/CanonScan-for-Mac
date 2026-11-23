@@ -179,3 +179,21 @@
 "Restablecer" = "Reset";
 "Listo" = "Done";
 "Arrastra sobre la imagen para elegir el recorte." = "Drag over the image to choose the crop.";
+
+/* Etapa 4: archivos / Stage 4: files */
+"Calidad del PDF" = "PDF quality";
+"Máxima" = "Maximum";
+"Alta" = "High";
+"Normal" = "Normal";
+"Pequeño" = "Small";
+"Proteger con contraseña" = "Protect with a password";
+"Contraseña del PDF" = "PDF password";
+"Se pedirá para abrir el archivo. No se guarda en CanonScan." = "It will be required to open the file. CanonScan doesn't store it.";
+"Contraseña" = "Password";
+"Repetir contraseña" = "Repeat password";
+"Las contraseñas no coinciden o están vacías." = "The passwords don't match or are empty.";
+"Guardado cancelado" = "Saving canceled";
+"Usa {fecha} y {hora} en el nombre, p. ej. «Factura {fecha}». Sin ellos se numera: IMG_0001…" = "Use {date} and {time} in the name, e.g. “Invoice {date}”. Without them it's numbered: IMG_0001…";
+"Abrir con una app" = "Open with an app";
+"App" = "App";
+"Adjuntar a un correo nuevo" = "Attach to a new email";

@@ -223,7 +223,7 @@ final class ScanModel: ObservableObject {
             pages.append(contentsOf: scanned)
             format = ms.format
             status = L("Página %d lista", pages.count)
-            await saveAsync(ocr: ms.format == .pdf && ms.ocr, revealInFinder: ms.showInFinder)
+            await saveAsync(ocr: ms.format == .pdf && ms.ocr, mode: ms)
             return
         }
         var folder = URL(fileURLWithPath: (ms.saveFolder as NSString).expandingTildeInPath, isDirectory: true)
@@ -232,18 +232,30 @@ final class ScanModel: ObservableObject {
             folder.appendPathComponent(f.string(from: Date()), isDirectory: true)
         }
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let prefix = ms.fileName.trimmingCharacters(in: .whitespaces).isEmpty ? "IMG" : ms.fileName
+        let pattern = ms.fileName.trimmingCharacters(in: .whitespaces).isEmpty ? "IMG" : ms.fileName
         let ext = ms.format.type.preferredFilenameExtension ?? "pdf"
         var saved = [URL]()
         let items = scanned.map { ($0.image, $0.dpi) }
-        status = ms.format == .pdf && ms.ocr ? L("Reconociendo texto…") : L("Guardando…")
         if ms.format == .pdf {
-            let url = Self.nextFile(in: folder, prefix: prefix, ext: ext)
-            try await Self.background { try DocumentTools.writePDF(pages: items, to: url, ocr: ms.ocr) }
+            var password: String?
+            if ms.pdfPassword {
+                guard let p = Self.askPassword() else {
+                    pages.append(contentsOf: scanned)
+                    status = L("Guardado cancelado")
+                    return
+                }
+                password = p
+            }
+            status = ms.ocr ? L("Reconociendo texto…") : L("Guardando…")
+            let url = Self.nextFile(in: folder, pattern: pattern, ext: ext)
+            try await Self.background {
+                try DocumentTools.writePDF(pages: items, to: url, ocr: ms.ocr, quality: ms.pdfQuality, password: password)
+            }
             saved.append(url)
         } else {
+            status = L("Guardando…")
             for item in items {
-                let url = Self.nextFile(in: folder, prefix: prefix, ext: ext)
+                let url = Self.nextFile(in: folder, pattern: pattern, ext: ext)
                 try await Self.background { try Self.writeImage(item.0, dpi: item.1, format: ms.format, to: url) }
                 saved.append(url)
             }
@@ -251,24 +263,85 @@ final class ScanModel: ObservableObject {
         // Las páginas quedan a la vista en la ventana / Pages stay visible in the window
         pages.append(contentsOf: scanned)
         status = L("Guardado: %@", saved.last?.lastPathComponent ?? "")
-        if ms.showInFinder { Self.reveal(saved) }
+        Self.afterSave(saved, ms)
     }
 
-    /// Muestra en Finder y devuelve CanonScan al frente / Shows in Finder and brings CanonScan back to front
-    private static func reveal(_ urls: [URL]) {
+    /// Acciones después de guardar / After-save actions
+    private static func afterSave(_ urls: [URL], _ ms: ModeSettings) {
+        guard !urls.isEmpty else { return }
+        let opensOther = ms.openWithApp || ms.attachToMail
+        if ms.showInFinder { reveal(urls, returnToApp: !opensOther) }
+        if ms.openWithApp {
+            let app = URL(fileURLWithPath: ms.openAppPath)
+            NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+        }
+        if ms.attachToMail, let mail = NSSharingService(named: .composeEmail) {
+            mail.perform(withItems: urls)
+        }
+    }
+
+    /// Muestra en Finder y, si corresponde, devuelve CanonScan al frente.
+    /// Shows in Finder and, if appropriate, brings CanonScan back to front.
+    private static func reveal(_ urls: [URL], returnToApp: Bool = true) {
         NSWorkspace.shared.activateFileViewerSelecting(urls)
+        guard returnToApp else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             NSApp.activate(ignoringOtherApps: true)
         }
     }
 
-    /// Siguiente nombre libre: IMG_0001, IMG_0002… / Next free name: IMG_0001, IMG_0002…
-    private static func nextFile(in folder: URL, prefix: String, ext: String) -> URL {
-        var n = 1
-        while true {
-            let url = folder.appendingPathComponent(String(format: "%@_%04d.%@", prefix, n, ext))
-            if !FileManager.default.fileExists(atPath: url.path) { return url }
+    /// Nombre de archivo. Sin {fecha}/{hora}: IMG_0001, IMG_0002…; con ellos: «Factura 2026-11-23 11.20», y si existe, « 2».
+    /// File name. Without {date}/{time}: IMG_0001…; with them: "Invoice 2026-11-23 11.20", and " 2" if it exists.
+    private static func nextFile(in folder: URL, pattern: String, ext: String) -> URL {
+        let tokens = ["{fecha}", "{hora}", "{date}", "{time}"]
+        guard tokens.contains(where: { pattern.contains($0) }) else {
+            var n = 1
+            while true {
+                let url = folder.appendingPathComponent(String(format: "%@_%04d.%@", pattern, n, ext))
+                if !FileManager.default.fileExists(atPath: url.path) { return url }
+                n += 1
+            }
+        }
+        let now = Date()
+        let d = DateFormatter(); d.dateFormat = "yyyy-MM-dd"
+        let h = DateFormatter(); h.dateFormat = "HH.mm"
+        let base = pattern
+            .replacingOccurrences(of: "{fecha}", with: d.string(from: now))
+            .replacingOccurrences(of: "{date}", with: d.string(from: now))
+            .replacingOccurrences(of: "{hora}", with: h.string(from: now))
+            .replacingOccurrences(of: "{time}", with: h.string(from: now))
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: ":", with: ".")
+        var url = folder.appendingPathComponent("\(base).\(ext)")
+        var n = 2
+        while FileManager.default.fileExists(atPath: url.path) {
+            url = folder.appendingPathComponent("\(base) \(n).\(ext)")
             n += 1
+        }
+        return url
+    }
+
+    /// Pide la contraseña del PDF (dos veces) / Asks for the PDF password (twice)
+    private static func askPassword() -> String? {
+        while true {
+            let a = NSAlert()
+            a.messageText = L("Contraseña del PDF")
+            a.informativeText = L("Se pedirá para abrir el archivo. No se guarda en CanonScan.")
+            let first = NSSecureTextField(frame: NSRect(x: 0, y: 30, width: 260, height: 24))
+            first.placeholderString = L("Contraseña")
+            let second = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+            second.placeholderString = L("Repetir contraseña")
+            let box = NSView(frame: NSRect(x: 0, y: 0, width: 260, height: 54))
+            box.addSubview(first); box.addSubview(second)
+            a.accessoryView = box
+            a.window.initialFirstResponder = first
+            a.addButton(withTitle: L("Guardar"))
+            a.addButton(withTitle: L("Cancelar"))
+            guard a.runModal() == .alertFirstButtonReturn else { return nil }
+            if !first.stringValue.isEmpty && first.stringValue == second.stringValue { return first.stringValue }
+            let e = NSAlert()
+            e.messageText = L("Las contraseñas no coinciden o están vacías.")
+            e.runModal()
         }
     }
 
@@ -345,7 +418,7 @@ final class ScanModel: ObservableObject {
     }
 
     /// Pide destino y escribe en segundo plano / Asks for a destination and writes in the background
-    func saveAsync(ocr: Bool = false, revealInFinder: Bool = false) async {
+    func saveAsync(ocr: Bool = false, mode ms: ModeSettings? = nil) async {
         guard !pages.isEmpty else { return }
         let panel = NSSavePanel()
         panel.allowedContentTypes = [format.type]
@@ -362,16 +435,22 @@ final class ScanModel: ObservableObject {
         defer { if !wasBusy { busy = false } }
         let items = pages.map { ($0.image, $0.dpi) }
         let fmt = format
+        var password: String?
+        if fmt == .pdf, ms?.pdfPassword == true {
+            guard let p = Self.askPassword() else { status = L("Guardado cancelado"); return }
+            password = p
+        }
+        let quality = ms?.pdfQuality ?? .high
         status = fmt == .pdf && ocr ? L("Reconociendo texto…") : L("Guardando…")
         do {
             try await Self.background {
                 switch fmt {
-                case .pdf: try DocumentTools.writePDF(pages: items, to: url, ocr: ocr)
+                case .pdf: try DocumentTools.writePDF(pages: items, to: url, ocr: ocr, quality: quality, password: password)
                 case .jpg, .png: try Self.writeImages(items, format: fmt, to: url)
                 }
             }
             status = L("Guardado: %@", url.lastPathComponent)
-            if revealInFinder { Self.reveal([url]) }
+            if let ms { Self.afterSave([url], ms) }
         } catch {
             errorMessage = L("No se pudo guardar: %@", error.localizedDescription)
             status = ""

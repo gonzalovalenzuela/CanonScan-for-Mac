@@ -146,10 +146,16 @@ struct ModeForm: View {
                 }
                 if s.wrappedValue.format == .pdf {
                     Toggle("PDF con texto buscable (OCR)", isOn: s.ocr)
+                    Picker("Calidad del PDF", selection: s.pdfQuality) {
+                        ForEach(PDFQuality.allCases) { Text($0.title).tag($0) }
+                    }
+                    Toggle("Proteger con contraseña", isOn: s.pdfPassword)
                 }
                 Toggle("Revisar antes de guardar", isOn: s.reviewBeforeSave)
                 if !s.wrappedValue.reviewBeforeSave {
                     TextField("Nombre de archivo", text: s.fileName)
+                    Text("Usa {fecha} y {hora} en el nombre, p. ej. «Factura {fecha}». Sin ellos se numera: IMG_0001…")
+                        .font(.caption).foregroundStyle(.secondary)
                     LabeledContent("Guardar en") {
                         HStack {
                             Text((s.wrappedValue.saveFolder as NSString).abbreviatingWithTildeInPath)
@@ -164,6 +170,19 @@ struct ModeForm: View {
 
             Section("Después de guardar") {
                 Toggle("Mostrar en Finder", isOn: s.showInFinder)
+                Toggle("Abrir con una app", isOn: s.openWithApp)
+                if s.wrappedValue.openWithApp {
+                    LabeledContent("App") {
+                        HStack {
+                            Image(nsImage: NSWorkspace.shared.icon(forFile: s.wrappedValue.openAppPath))
+                                .resizable().frame(width: 16, height: 16)
+                            Text(FileManager.default.displayName(atPath: s.wrappedValue.openAppPath))
+                                .foregroundStyle(.secondary)
+                            Button("Cambiar…") { chooseApp() }
+                        }
+                    }
+                }
+                Toggle("Adjuntar a un correo nuevo", isOn: s.attachToMail)
             }
 
             HStack {
@@ -172,6 +191,13 @@ struct ModeForm: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func chooseApp() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        if panel.runModal() == .OK, let url = panel.url { s.wrappedValue.openAppPath = url.path }
     }
 
     private func chooseFolder() {
