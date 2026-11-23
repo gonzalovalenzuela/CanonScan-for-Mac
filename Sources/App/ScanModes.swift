@@ -32,6 +32,7 @@ enum ScanMode: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .document:
             s.format = .pdf; s.ocr = true; s.deskew = true; s.cropToDocument = true
+            s.adjust.whitenBackground = true; s.adjust.autoOrient = true; s.adjust.skipBlank = true
         case .photo:
             s.format = .jpg; s.ocr = false; s.deskew = false; s.cropToDocument = true; s.paper = .glass
         case .custom:
@@ -61,6 +62,7 @@ struct ModeSettings: Codable, Equatable {
     /// Revisar y elegir dónde guardar / Review and choose where to save
     var reviewBeforeSave = false
     var showInFinder = true
+    var adjust = ImageAdjust()
 
     init() {}
 
@@ -73,7 +75,7 @@ struct ModeSettings: Codable, Equatable {
         get(.colorMode, &colorMode); get(.paper, &paper); get(.dpi, &dpi); get(.format, &format)
         get(.ocr, &ocr); get(.deskew, &deskew); get(.cropToDocument, &cropToDocument)
         get(.fileName, &fileName); get(.saveFolder, &saveFolder); get(.dateSubfolder, &dateSubfolder)
-        get(.reviewBeforeSave, &reviewBeforeSave); get(.showInFinder, &showInFinder)
+        get(.reviewBeforeSave, &reviewBeforeSave); get(.showInFinder, &showInFinder); get(.adjust, &adjust)
         // Versión 0.2–0.3 guardaba «grayscale» / Versions 0.2–0.3 saved "grayscale"
         if let legacy = try? decoder.container(keyedBy: LegacyKeys.self),
            let gray = try? legacy.decode(Bool.self, forKey: .grayscale), gray, !c.contains(.colorMode) {

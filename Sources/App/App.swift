@@ -180,6 +180,10 @@ struct Sidebar: View {
                 }
             }
 
+            Section("Imagen") {
+                AdjustControls(adjust: $model.adjust)
+            }
+
             Section("Guardar como") {
                 OptionRow(title: "Formato", systemImage: "doc") {
                     Picker("Formato", selection: $model.format) {

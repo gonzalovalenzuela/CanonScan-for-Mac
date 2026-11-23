@@ -133,6 +133,12 @@ struct ModeForm: View {
                 }
             }
 
+            Section("Imagen") {
+                AdjustControls(adjust: s.adjust,
+                               showRestore: mode == .photo || mode == .custom,
+                               showSkipBlank: mode != .stitch)
+            }
+
             Section("Guardar") {
                 Picker("Formato", selection: s.format) {
                     ForEach(OutputFormat.allCases) { Text($0.rawValue).tag($0) }

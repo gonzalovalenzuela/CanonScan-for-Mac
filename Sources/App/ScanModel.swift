@@ -32,6 +32,8 @@ final class ScanModel: ObservableObject {
     @Published var colorMode: ColorMode = .color
     @Published var paper: PaperSize = .a4
     @Published var format: OutputFormat = .pdf
+    /// Mejoras de imagen del escaneo manual / Image adjustments for manual scanning
+    @Published var adjust = ImageAdjust()
     /// Zona elegida en la vista previa (nil = tamaño de papel) / Region chosen in the preview (nil = paper size)
     @Published var region: ScanRegion?
     /// Imagen de la vista previa y si se está mostrando / Preview image and whether it is shown
@@ -99,10 +101,23 @@ final class ScanModel: ObservableObject {
             switch color {
             case .color: break
             case .gray: if let g = ImageTools.toGray(img) { img = g }
-            case .bw: if let b = ImageTools.toBW(img) { img = b }
+            case .bw: if let g = ImageTools.toGray(img) { img = g }   // B/N al final / B/W at the end
             }
             return img
         }.value
+    }
+
+    /// Orienta, corrige, mejora y pasa a B/N; nil si es una página en blanco a omitir.
+    /// Orients, corrects, enhances and converts to B/W; nil if it's a blank page to skip.
+    nonisolated private static func process(_ input: CGImage, color: ColorMode, adjust a: ImageAdjust,
+                                            deskew: Bool, crop: Bool) -> CGImage? {
+        var img = input
+        if a.autoOrient { img = ImageEnhance.autoOrient(img) }
+        if deskew || crop { img = DocumentTools.correct(img, deskew: deskew, crop: crop) }
+        img = ImageEnhance.apply(img, a)
+        if a.skipBlank && ImageEnhance.isBlank(img) { return nil }
+        if color == .bw, let b = ImageTools.toBW(img) { img = b }
+        return img
     }
 
     // MARK: - Vista previa / Preview
@@ -159,26 +174,34 @@ final class ScanModel: ObservableObject {
                     guard let joined = try await Self.background({ DocumentTools.stitch(a, b) }) else {
                         throw CHMPError.protocolError(L("no se pudo leer la imagen escaneada"))
                     }
+                    var stitchAdjust = ms.adjust; stitchAdjust.skipBlank = false   // Unir nunca descarta / Stitch never skips
                     let fixed = try await Self.background {
-                        DocumentTools.correct(joined, deskew: ms.deskew, crop: ms.cropToDocument)
+                        Self.process(joined, color: ms.colorMode, adjust: stitchAdjust, deskew: ms.deskew, crop: ms.cropToDocument)
                     }
-                    scanned.append(Self.page(fixed, dpi: ms.dpi))
+                    if let fixed { scanned.append(Self.page(fixed, dpi: ms.dpi)) }
                 } else {
                     while true {
                         let img = try await scanImage(host: host, settings: settings, crop: crop, color: ms.colorMode)
-                        if ms.deskew || ms.cropToDocument { status = L("Procesando imagen…") }
+                        status = L("Procesando imagen…")
                         let fixed = try await Self.background {
-                            DocumentTools.correct(img, deskew: ms.deskew, crop: ms.cropToDocument)
+                            Self.process(img, color: ms.colorMode, adjust: ms.adjust, deskew: ms.deskew, crop: ms.cropToDocument)
                         }
-                        scanned.append(Self.page(fixed, dpi: ms.dpi))
+                        let title: String
+                        if let fixed {
+                            scanned.append(Self.page(fixed, dpi: ms.dpi))
+                            title = L("Página %d lista", scanned.count)
+                        } else {
+                            title = L("Página en blanco omitida")
+                        }
                         // PDF: ¿otra página? / PDF: another page?
                         guard ms.format == .pdf,
-                              Self.confirm(L("Página %d lista", scanned.count),
+                              Self.confirm(title,
                                            L("¿Escanear otra página para el mismo PDF?"),
                                            ok: L("Escanear otra"), cancel: L("Terminar"))
                         else { break }
                     }
                 }
+                guard !scanned.isEmpty else { status = L("Página en blanco omitida"); return }
                 try await finish(scanned, mode: mode, settings: ms)
             } catch {
                 errorMessage = error.localizedDescription
@@ -258,10 +281,15 @@ final class ScanModel: ObservableObject {
         status = L("Conectando…")
         let (settings, crop) = plan(dpi: dpi, color: colorMode, paper: paper)
         let color = colorMode
+        let a = adjust
         Task {
             defer { busy = false }
             do {
-                let img = try await scanImage(host: host, settings: settings, crop: crop, color: color)
+                let raw = try await scanImage(host: host, settings: settings, crop: crop, color: color)
+                status = L("Procesando imagen…")
+                guard let img = try await Self.background({
+                    Self.process(raw, color: color, adjust: a, deskew: false, crop: false)
+                }) else { status = L("Página en blanco omitida"); return }
                 pages.append(Self.page(img, dpi: settings.dpi))
                 status = L("Página %d lista", pages.count)
             } catch {

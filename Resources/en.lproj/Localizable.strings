@@ -155,3 +155,15 @@
 "Zona" = "Region";
 "Zona: %@ × %@ mm" = "Region: %@ × %@ mm";
 "%@ × %@ mm" = "%@ × %@ mm";
+
+/* Etapa 2: imagen / Stage 2: image */
+"Imagen" = "Image";
+"Blanquear fondo" = "Whiten background";
+"Orientación automática" = "Automatic orientation";
+"Saltar páginas en blanco" = "Skip blank pages";
+"Restaurar colores de fotos antiguas" = "Restore faded photo colors";
+"Brillo" = "Brightness";
+"Contraste" = "Contrast";
+"Nitidez" = "Sharpness";
+"Doble clic para volver a 0" = "Double-click to reset to 0";
+"Página en blanco omitida" = "Blank page skipped";
