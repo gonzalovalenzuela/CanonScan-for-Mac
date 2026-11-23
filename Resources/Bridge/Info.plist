@@ -34,6 +34,8 @@
 		<string>_ipps._tcp</string>
 		<string>_uscan._tcp</string>
 	</array>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2026 Gonzalo Valenzuela. Licencia MIT.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>CanonScan Bridge necesita la red local para usar tu impresora Canon y compartirla como escáner de macOS.</string>
 </dict>

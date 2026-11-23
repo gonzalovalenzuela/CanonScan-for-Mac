@@ -125,3 +125,9 @@
 "no hay una impresora Canon conectada por USB" = "no Canon printer is connected over USB";
 "no se pudo abrir el escáner USB (¿lo está usando otra app?)" = "couldn't open the USB scanner (is another app using it?)";
 "el escáner USB no tiene los canales esperados" = "the USB scanner doesn't have the expected pipes";
+
+/* Acerca de / About */
+"Acerca de CanonScan Bridge" = "About CanonScan Bridge";
+"Comparte la impresora Canon como escáner AirScan de macOS." = "Shares the Canon printer as a macOS AirScan scanner.";
+"Cliente CHMP basado en:" = "CHMP client based on:";
+"Canon y PIXMA son marcas de Canon Inc. Este proyecto no está afiliado a Canon." = "Canon and PIXMA are trademarks of Canon Inc. This project is not affiliated with Canon.";

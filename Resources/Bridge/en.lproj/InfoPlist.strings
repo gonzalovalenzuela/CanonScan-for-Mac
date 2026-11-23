@@ -1,1 +1,2 @@
 "NSLocalNetworkUsageDescription" = "CanonScan Bridge needs the local network to use your Canon printer and share it as a macOS scanner.";
+"NSHumanReadableCopyright" = "© 2026 Gonzalo Valenzuela. MIT License.";
