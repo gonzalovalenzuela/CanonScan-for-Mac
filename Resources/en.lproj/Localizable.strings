@@ -168,3 +168,14 @@
 "Doble clic para volver a 0" = "Double-click to reset to 0";
 "Página en blanco omitida" = "Blank page skipped";
 "Sin impresora" = "No printer";
+
+/* Etapa 3: fotos y páginas / Stage 3: photos and pages */
+"Varias fotos: un archivo por foto" = "Multiple photos: one file per photo";
+"%d fotos separadas" = "%d photos separated";
+"Editar página" = "Edit Page";
+"Girar a la izquierda" = "Rotate left";
+"Girar a la derecha" = "Rotate right";
+"Recortar" = "Crop";
+"Restablecer" = "Reset";
+"Listo" = "Done";
+"Arrastra sobre la imagen para elegir el recorte." = "Drag over the image to choose the crop.";

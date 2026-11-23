@@ -35,6 +35,7 @@ enum ScanMode: String, CaseIterable, Codable, Identifiable {
             s.adjust.whitenBackground = true; s.adjust.autoOrient = true; s.adjust.skipBlank = true
         case .photo:
             s.format = .jpg; s.ocr = false; s.deskew = false; s.cropToDocument = true; s.paper = .glass
+            s.adjust.splitPhotos = true
         case .custom:
             s.format = .pdf; s.ocr = true; s.deskew = false; s.cropToDocument = false
         case .stitch:

@@ -8,8 +8,12 @@ struct AdjustControls: View {
     @Binding var adjust: ImageAdjust
     var showRestore = true
     var showSkipBlank = true
+    var showSplit = true
 
     var body: some View {
+        if showSplit {
+            Toggle("Varias fotos: un archivo por foto", isOn: $adjust.splitPhotos)
+        }
         Toggle("Blanquear fondo", isOn: $adjust.whitenBackground)
         Toggle("Orientación automática", isOn: $adjust.autoOrient)
         if showSkipBlank {

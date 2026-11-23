@@ -54,6 +54,8 @@ final class ScanModel: ObservableObject {
     @Published private(set) var busy = false
     @Published private(set) var status = ""
     @Published var errorMessage: String?
+    /// Página abierta en el editor / Page open in the editor
+    @Published var editingPage: ScannedPage?
 
     let browser = PrinterBrowser()
     let modes = ModeStore()
@@ -107,17 +109,22 @@ final class ScanModel: ObservableObject {
         }.value
     }
 
-    /// Orienta, corrige, mejora y pasa a B/N; nil si es una página en blanco a omitir.
-    /// Orients, corrects, enhances and converts to B/W; nil if it's a blank page to skip.
+    /// Separa fotos, orienta, corrige, mejora y pasa a B/N. Devuelve vacío si es una página en blanco a omitir.
+    /// Splits photos, orients, corrects, enhances and converts to B/W. Returns empty for a blank page to skip.
     nonisolated private static func process(_ input: CGImage, color: ColorMode, adjust a: ImageAdjust,
-                                            deskew: Bool, crop: Bool) -> CGImage? {
-        var img = input
-        if a.autoOrient { img = ImageEnhance.autoOrient(img) }
-        if deskew || crop { img = DocumentTools.correct(img, deskew: deskew, crop: crop) }
-        img = ImageEnhance.apply(img, a)
-        if a.skipBlank && ImageEnhance.isBlank(img) { return nil }
-        if color == .bw, let b = ImageTools.toBW(img) { img = b }
-        return img
+                                            deskew: Bool, crop: Bool) -> [CGImage] {
+        let parts = a.splitPhotos ? DocumentTools.splitPhotos(input) : [input]
+        let split = parts.count > 1
+        return parts.compactMap { part in
+            var img = part
+            if a.autoOrient { img = ImageEnhance.autoOrient(img) }
+            // Las fotos separadas ya vienen recortadas / Split photos are already cropped
+            if !split && (deskew || crop) { img = DocumentTools.correct(img, deskew: deskew, crop: crop) }
+            img = ImageEnhance.apply(img, a)
+            if a.skipBlank && ImageEnhance.isBlank(img) { return nil }
+            if color == .bw, let b = ImageTools.toBW(img) { img = b }
+            return img
+        }
     }
 
     // MARK: - Vista previa / Preview
@@ -174,11 +181,11 @@ final class ScanModel: ObservableObject {
                     guard let joined = try await Self.background({ DocumentTools.stitch(a, b) }) else {
                         throw CHMPError.protocolError(L("no se pudo leer la imagen escaneada"))
                     }
-                    var stitchAdjust = ms.adjust; stitchAdjust.skipBlank = false   // Unir nunca descarta / Stitch never skips
+                    var stitchAdjust = ms.adjust; stitchAdjust.skipBlank = false; stitchAdjust.splitPhotos = false   // Unir nunca descarta ni separa / Stitch never skips or splits
                     let fixed = try await Self.background {
                         Self.process(joined, color: ms.colorMode, adjust: stitchAdjust, deskew: ms.deskew, crop: ms.cropToDocument)
                     }
-                    if let fixed { scanned.append(Self.page(fixed, dpi: ms.dpi)) }
+                    scanned += fixed.map { Self.page($0, dpi: ms.dpi) }
                 } else {
                     while true {
                         let img = try await scanImage(host: host, settings: settings, crop: crop, color: ms.colorMode)
@@ -187,11 +194,11 @@ final class ScanModel: ObservableObject {
                             Self.process(img, color: ms.colorMode, adjust: ms.adjust, deskew: ms.deskew, crop: ms.cropToDocument)
                         }
                         let title: String
-                        if let fixed {
-                            scanned.append(Self.page(fixed, dpi: ms.dpi))
-                            title = L("Página %d lista", scanned.count)
-                        } else {
+                        if fixed.isEmpty {
                             title = L("Página en blanco omitida")
+                        } else {
+                            scanned += fixed.map { Self.page($0, dpi: ms.dpi) }
+                            title = fixed.count > 1 ? L("%d fotos separadas", fixed.count) : L("Página %d lista", scanned.count)
                         }
                         // PDF: ¿otra página? / PDF: another page?
                         guard ms.format == .pdf,
@@ -287,11 +294,12 @@ final class ScanModel: ObservableObject {
             do {
                 let raw = try await scanImage(host: host, settings: settings, crop: crop, color: color)
                 status = L("Procesando imagen…")
-                guard let img = try await Self.background({
+                let imgs = try await Self.background {
                     Self.process(raw, color: color, adjust: a, deskew: false, crop: false)
-                }) else { status = L("Página en blanco omitida"); return }
-                pages.append(Self.page(img, dpi: settings.dpi))
-                status = L("Página %d lista", pages.count)
+                }
+                guard !imgs.isEmpty else { status = L("Página en blanco omitida"); return }
+                pages += imgs.map { Self.page($0, dpi: settings.dpi) }
+                status = imgs.count > 1 ? L("%d fotos separadas", imgs.count) : L("Página %d lista", pages.count)
             } catch {
                 errorMessage = error.localizedDescription
                 status = ""
@@ -301,6 +309,20 @@ final class ScanModel: ObservableObject {
 
     func remove(_ page: ScannedPage) {
         pages.removeAll { $0.id == page.id }
+    }
+
+    /// Reemplaza una página editada en su misma posición / Replaces an edited page at the same position
+    func replace(_ page: ScannedPage, with image: CGImage) {
+        guard let i = pages.firstIndex(where: { $0.id == page.id }) else { return }
+        pages[i] = Self.page(image, dpi: page.dpi)
+    }
+
+    /// Mueve una página a la posición de otra (arrastrar) / Moves a page to another's position (drag)
+    func move(id: UUID, to target: UUID) {
+        guard id != target, let from = pages.firstIndex(where: { $0.id == id }),
+              let to = pages.firstIndex(where: { $0.id == target }) else { return }
+        let p = pages.remove(at: from)
+        pages.insert(p, at: to)
     }
 
     func move(_ page: ScannedPage, by offset: Int) {

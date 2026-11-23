@@ -15,6 +15,8 @@ struct ImageAdjust: Codable, Equatable {
     var autoOrient = false
     var skipBlank = false
     var restoreColors = false
+    /// Separa varias fotos del vidrio en páginas distintas / Splits several photos into separate pages
+    var splitPhotos = false
     /// −50 a +50 / −50 to +50
     var brightness = 0.0
     var contrast = 0.0
@@ -29,7 +31,7 @@ struct ImageAdjust: Codable, Equatable {
         func get<T: Decodable>(_ k: CodingKeys, _ v: inout T) { if let x = try? c.decode(T.self, forKey: k) { v = x } }
         get(.whitenBackground, &whitenBackground); get(.autoOrient, &autoOrient); get(.skipBlank, &skipBlank)
         get(.restoreColors, &restoreColors); get(.brightness, &brightness); get(.contrast, &contrast)
-        get(.sharpness, &sharpness)
+        get(.sharpness, &sharpness); get(.splitPhotos, &splitPhotos)
     }
 
     var changesPixels: Bool {

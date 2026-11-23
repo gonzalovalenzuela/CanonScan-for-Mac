@@ -62,6 +62,73 @@ enum DocumentTools {
         return Quad(topLeft: p(r.topLeft), topRight: p(r.topRight), bottomLeft: p(r.bottomLeft), bottomRight: p(r.bottomRight))
     }
 
+    // MARK: - Varias fotos / Multiple photos
+
+    /// Separa las fotos que hay sobre el vidrio; si encuentra menos de dos, devuelve la imagen tal cual.
+    /// Splits the photos lying on the glass; if fewer than two are found, returns the image unchanged.
+    static func splitPhotos(_ img: CGImage) -> [CGImage] {
+        let req = VNDetectRectanglesRequest()
+        req.maximumObservations = 0            // todas / all
+        req.minimumSize = 0.12
+        req.minimumConfidence = 0.5
+        req.quadratureTolerance = 30
+        req.minimumAspectRatio = 0.3
+        try? VNImageRequestHandler(cgImage: img, options: [:]).perform([req])
+        let found = (req.results ?? []).sorted { $0.boundingBox.width * $0.boundingBox.height > $1.boundingBox.width * $1.boundingBox.height }
+
+        // Descarta rectángulos dentro de otros (detalles de la misma foto).
+        // Drop rectangles inside others (details of the same photo).
+        var kept = [VNRectangleObservation]()
+        for r in found where !kept.contains(where: { overlap(r.boundingBox, $0.boundingBox) > 0.5 }) {
+            kept.append(r)
+        }
+        guard kept.count >= 2 else { return [img] }
+
+        // Orden de lectura: de arriba abajo y de izquierda a derecha.
+        // Reading order: top to bottom, left to right.
+        kept.sort {
+            abs($0.boundingBox.midY - $1.boundingBox.midY) > 0.1
+                ? $0.boundingBox.midY > $1.boundingBox.midY
+                : $0.boundingBox.minX < $1.boundingBox.minX
+        }
+        let ci = CIImage(cgImage: img)
+        let w = CGFloat(img.width), h = CGFloat(img.height)
+        func p(_ n: CGPoint) -> CGPoint { CGPoint(x: n.x * w, y: n.y * h) }
+        return kept.compactMap { r in
+            let f = CIFilter(name: "CIPerspectiveCorrection")!
+            f.setValue(ci, forKey: kCIInputImageKey)
+            f.setValue(CIVector(cgPoint: p(r.topLeft)), forKey: "inputTopLeft")
+            f.setValue(CIVector(cgPoint: p(r.topRight)), forKey: "inputTopRight")
+            f.setValue(CIVector(cgPoint: p(r.bottomLeft)), forKey: "inputBottomLeft")
+            f.setValue(CIVector(cgPoint: p(r.bottomRight)), forKey: "inputBottomRight")
+            guard let out = f.outputImage else { return nil }
+            return ciContext.createCGImage(out, from: out.extent.integral)
+        }
+    }
+
+    /// Fracción del rectángulo menor cubierta por el otro / Fraction of the smaller rect covered by the other
+    private static func overlap(_ a: CGRect, _ b: CGRect) -> CGFloat {
+        let i = a.intersection(b)
+        guard !i.isNull else { return 0 }
+        return (i.width * i.height) / min(a.width * a.height, b.width * b.height)
+    }
+
+    // MARK: - Editar página / Page editing
+
+    /// Gira 90° a la izquierda o derecha / Rotates 90° left or right
+    static func rotate(_ img: CGImage, clockwise: Bool) -> CGImage {
+        let ci = CIImage(cgImage: img).oriented(clockwise ? .right : .left)
+        return ciContext.createCGImage(ci, from: ci.extent) ?? img
+    }
+
+    /// Recorta con un rectángulo normalizado (0–1, origen arriba a la izquierda).
+    /// Crops with a normalized rectangle (0–1, top-left origin).
+    static func crop(_ img: CGImage, normalized r: CGRect) -> CGImage {
+        let rect = CGRect(x: r.minX * CGFloat(img.width), y: r.minY * CGFloat(img.height),
+                          width: r.width * CGFloat(img.width), height: r.height * CGFloat(img.height)).integral
+        return img.cropping(to: rect) ?? img
+    }
+
     // MARK: - Unir / Stitch
 
     /// Une dos mitades: la segunda se escanea con el original girado 180°.

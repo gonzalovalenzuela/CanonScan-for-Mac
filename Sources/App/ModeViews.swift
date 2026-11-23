@@ -136,7 +136,8 @@ struct ModeForm: View {
             Section("Imagen") {
                 AdjustControls(adjust: s.adjust,
                                showRestore: mode == .photo || mode == .custom,
-                               showSkipBlank: mode != .stitch)
+                               showSkipBlank: mode != .stitch,
+                               showSplit: mode == .photo || mode == .custom)
             }
 
             Section("Guardar") {

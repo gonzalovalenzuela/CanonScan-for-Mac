@@ -275,6 +275,7 @@ struct PrinterStatusRow: View {
 
 struct PagesView: View {
     @EnvironmentObject var model: ScanModel
+    @State private var dragging: UUID?
 
     var body: some View {
         // Sin fondo propio: el fondo estándar sigue las esquinas de la ventana en macOS 26.
@@ -289,6 +290,12 @@ struct PagesView: View {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 28)], spacing: 28) {
                         ForEach(Array(model.pages.enumerated()), id: \.element.id) { index, page in
                             PageCard(page: page, number: index + 1, count: model.pages.count)
+                                // Arrastrar para reordenar / Drag to reorder
+                                .onDrag {
+                                    dragging = page.id
+                                    return NSItemProvider(object: page.id.uuidString as NSString)
+                                }
+                                .onDrop(of: [.text], delegate: PageDropDelegate(target: page.id, model: model, dragging: $dragging))
                         }
                         if model.busy { ScanningCard() }
                     }
@@ -298,6 +305,9 @@ struct PagesView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .sheet(item: $model.editingPage) { page in
+            PageEditor(page: page).environmentObject(model)
+        }
         .safeAreaInset(edge: .top) { ModeBar() }
         .safeAreaInset(edge: .bottom) { StatusBar() }
         .navigationTitle("Escáner Canon")
@@ -345,6 +355,7 @@ struct PageCard: View {
                     }
                 }
                 .scaleEffect(hovering ? 1.01 : 1)
+                .onTapGesture(count: 2) { if !model.busy { model.editingPage = page } }
 
             HStack(spacing: 6) {
                 Text("Página \(number)").font(.callout.weight(.medium))
@@ -356,6 +367,8 @@ struct PageCard: View {
 
     private var controls: some View {
         HStack(spacing: 2) {
+            Button { model.editingPage = page } label: { Image(systemName: "pencil") }
+                .help(L("Editar página"))
             Button { model.move(page, by: -1) } label: { Image(systemName: "chevron.left") }
                 .disabled(number == 1)
                 .help("Mover antes")
@@ -446,5 +459,24 @@ struct StatusBar: View {
             .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
             .padding(.bottom, 14)
             .transition(.opacity)
+    }
+}
+
+/// Reordena al arrastrar una página sobre otra / Reorders when dragging a page over another
+struct PageDropDelegate: DropDelegate {
+    let target: UUID
+    let model: ScanModel
+    @Binding var dragging: UUID?
+
+    func dropEntered(info: DropInfo) {
+        guard let id = dragging, id != target else { return }
+        withAnimation(.spring(duration: 0.3)) { model.move(id: id, to: target) }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+
+    func performDrop(info: DropInfo) -> Bool {
+        dragging = nil
+        return true
     }
 }
