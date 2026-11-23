@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "${0:A:h}"
 
-VERSION=0.3
+VERSION=0.4
 mkdir -p dist build/art
 OUT="dist/CanonScan-$VERSION.dmg"
 WORK=build/dmg
