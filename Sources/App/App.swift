@@ -8,6 +8,12 @@ struct CanonScanApp: App {
     @StateObject private var model = ScanModel()
     @StateObject private var bridge = BridgeSettings()
 
+    /// Nombre visible traducido / Localized display name
+    static var appName: String {
+        Bundle.main.localizedInfoDictionary?["CFBundleDisplayName"] as? String
+            ?? Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String ?? "CanonScan"
+    }
+
     var body: some Scene {
         WindowGroup("Escáner Canon") {
             ContentView()
@@ -18,6 +24,14 @@ struct CanonScanApp: App {
         }
         .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unified)
+        .commands {
+            // «Acerca de» con copyright y créditos / About with copyright and credits
+            CommandGroup(replacing: .appInfo) {
+                Button(L("Acerca de %@", Self.appName)) {
+                    AboutPanel.show(description: L("Escanea por WiFi o USB con impresoras Canon PIXMA G3010 / G3110."))
+                }
+            }
+        }
 
         // Ajustes de los modos (⌘,) / Mode settings (⌘,)
         Settings {

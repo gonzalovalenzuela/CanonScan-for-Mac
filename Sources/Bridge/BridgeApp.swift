@@ -132,38 +132,9 @@ final class BridgeController: ObservableObject {
         }
     }
 
-    /// Panel «Acerca de» con copyright y créditos / About panel with copyright and credits
+    /// Panel «Acerca de» / About panel
     func showAbout() {
-        let credits = NSMutableAttributedString()
-        let body: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
-            .foregroundColor: NSColor.labelColor,
-        ]
-        let note: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
-            .foregroundColor: NSColor.secondaryLabelColor,
-        ]
-        func add(_ s: String, _ a: [NSAttributedString.Key: Any]) { credits.append(NSAttributedString(string: s, attributes: a)) }
-        func link(_ title: String, _ url: String) {
-            var a = body
-            a[.link] = URL(string: url)
-            credits.append(NSAttributedString(string: title, attributes: a))
-        }
-        add(L("Comparte la impresora Canon como escáner AirScan de macOS.") + "\n\n", body)
-        link("github.com/gonzalovalenzuela/CanonScan-for-Mac", "https://github.com/gonzalovalenzuela/CanonScan-for-Mac")
-        add("\n\n" + L("Cliente CHMP basado en:") + "\n", body)
-        link("dfrancio-DF/canon-g3010-sane", "https://github.com/dfrancio-DF/canon-g3010-sane")
-        add(" · ", body)
-        link("wailun42/canon-g3010-chmp-scanner", "https://github.com/wailun42/canon-g3010-chmp-scanner")
-        add(" (MIT)\n\n", body)
-        add(L("Canon y PIXMA son marcas de Canon Inc. Este proyecto no está afiliado a Canon."), note)
-        let centered = NSMutableParagraphStyle()
-        centered.alignment = .center
-        credits.addAttribute(.paragraphStyle, value: centered, range: NSRange(location: 0, length: credits.length))
-
-        // App de barra de menú: hay que traerla al frente / Menu bar app: bring it to front
-        NSApp.activate(ignoringOtherApps: true)
-        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
+        AboutPanel.show(description: L("Comparte la impresora Canon como escáner AirScan de macOS."))
     }
 
     func openCanonScan() {

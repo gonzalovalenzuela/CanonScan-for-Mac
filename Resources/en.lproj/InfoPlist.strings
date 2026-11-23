@@ -1,3 +1,4 @@
 "CFBundleName" = "Canon Scanner";
 "CFBundleDisplayName" = "Canon Scanner";
 "NSLocalNetworkUsageDescription" = "Canon Scanner needs local network access to find and use your Canon printer's scanner.";
+"NSHumanReadableCopyright" = "© 2026 Gonzalo Valenzuela. MIT License.";

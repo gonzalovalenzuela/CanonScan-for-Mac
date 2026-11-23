@@ -35,6 +35,8 @@
 	</array>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2026 Gonzalo Valenzuela. Licencia MIT.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Escáner Canon necesita acceso a la red local para encontrar y usar el escáner de tu impresora Canon.</string>
 </dict>
