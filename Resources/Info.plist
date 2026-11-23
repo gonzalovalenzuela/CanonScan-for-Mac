@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>es</string>
 	<key>CFBundleDisplayName</key>
-	<string>Escáner Canon</string>
+	<string>CanonScan</string>
 	<key>CFBundleExecutable</key>
 	<string>CanonScan</string>
 	<key>CFBundleIconName</key>
@@ -18,7 +18,7 @@
 		<string>en</string>
 	</array>
 	<key>CFBundleName</key>
-	<string>Escáner Canon</string>
+	<string>CanonScan</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -38,6 +38,6 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Gonzalo Valenzuela. Licencia MIT.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Escáner Canon necesita acceso a la red local para encontrar y usar el escáner de tu impresora Canon.</string>
+	<string>CanonScan necesita acceso a la red local para encontrar y usar el escáner de tu impresora Canon.</string>
 </dict>
 </plist>

@@ -15,7 +15,7 @@ struct CanonScanApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("Escáner Canon") {
+        WindowGroup("CanonScan for Mac") {
             ContentView()
                 .environmentObject(model)
                 .environmentObject(model.browser)
@@ -28,7 +28,7 @@ struct CanonScanApp: App {
             // «Acerca de» con copyright y créditos / About with copyright and credits
             CommandGroup(replacing: .appInfo) {
                 Button(L("Acerca de %@", Self.appName)) {
-                    AboutPanel.show(description: L("Escanea por WiFi o USB con impresoras Canon PIXMA G3010 / G3110."))
+                    AboutPanel.show(name: "CanonScan for Mac", description: L("Escanea por WiFi o USB con impresoras Canon PIXMA G3010 / G3110."))
                 }
             }
         }
@@ -310,7 +310,7 @@ struct PagesView: View {
         }
         .safeAreaInset(edge: .top) { ModeBar() }
         .safeAreaInset(edge: .bottom) { StatusBar() }
-        .navigationTitle("Escáner Canon")
+        .navigationTitle("CanonScan for Mac")
         .navigationSubtitle(model.pages.isEmpty ? "" : L("Páginas: %lld", model.pages.count))
     }
 }

@@ -11,7 +11,8 @@ enum AboutPanel {
 
     /// Muestra el panel con una descripción propia de cada app.
     /// Shows the panel with a description specific to each app.
-    static func show(description: String) {
+    /// `name` reemplaza el nombre del bundle / `name` replaces the bundle name.
+    static func show(name: String? = nil, description: String) {
         let credits = NSMutableAttributedString()
         let body: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
@@ -46,6 +47,8 @@ enum AboutPanel {
         // Trae la app al frente (necesario en el puente de barra de menú).
         // Bring the app to front (needed for the menu bar bridge).
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
+        var options: [NSApplication.AboutPanelOptionKey: Any] = [.credits: credits]
+        if let name { options[.applicationName] = name }
+        NSApp.orderFrontStandardAboutPanel(options: options)
     }
 }

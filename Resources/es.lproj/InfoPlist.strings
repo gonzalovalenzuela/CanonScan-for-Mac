@@ -1,4 +1,4 @@
-"CFBundleName" = "Escáner Canon";
-"CFBundleDisplayName" = "Escáner Canon";
-"NSLocalNetworkUsageDescription" = "Escáner Canon necesita acceso a la red local para encontrar y usar el escáner de tu impresora Canon.";
+"CFBundleName" = "CanonScan";
+"CFBundleDisplayName" = "CanonScan";
+"NSLocalNetworkUsageDescription" = "CanonScan necesita acceso a la red local para encontrar y usar el escáner de tu impresora Canon.";
 "NSHumanReadableCopyright" = "© 2026 Gonzalo Valenzuela. Licencia MIT.";
