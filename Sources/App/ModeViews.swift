@@ -25,12 +25,13 @@ struct ModeBar: View {
                 }
                 .buttonStyle(ModeButtonStyle())
                 .help(summary(mode))
+                // Solo escanear requiere impresora / Only scanning needs a printer
+                .disabled(model.busy || model.targetHost == nil)
             }
             SettingsButton()
                 .buttonStyle(ModeButtonStyle())
                 .help(L("Ajustes de los modos…"))
         }
-        .disabled(model.busy || model.targetHost == nil)
         .padding(.horizontal, 28)
         .padding(.top, 14)
         .padding(.bottom, 6)
