@@ -10,9 +10,16 @@ OUT="dist/CanonScan-$VERSION.dmg"
 WORK=build/dmg
 
 # 1. Íconos y app / Icons and app
-swift Tools/make-art.swift build/art >/dev/null
-iconutil -c icns build/art/AppIcon.iconset -o Resources/AppIcon.icns
 swift Tools/printer-icon.swift build/art/printer-icon.png 1024 >/dev/null
+# Ícono de la app: impresora + haz de escaneo sobre fondo azul.
+# App icon: printer + scan beam over the blue background.
+swift Tools/fusion-icon.swift build/art/printer-icon.png build/art/app-icon.png beam >/dev/null
+rm -rf build/art/AppIcon.iconset && mkdir -p build/art/AppIcon.iconset
+for s in 16 32 128 256 512; do
+  sips -z $s $s build/art/app-icon.png --out "build/art/AppIcon.iconset/icon_${s}x${s}.png" >/dev/null
+  sips -z $((s * 2)) $((s * 2)) build/art/app-icon.png --out "build/art/AppIcon.iconset/icon_${s}x${s}@2x.png" >/dev/null
+done
+iconutil -c icns build/art/AppIcon.iconset -o Resources/AppIcon.icns
 ./build.sh
 
 # 2. Ícono del volumen (la impresora) / Volume icon (the printer)

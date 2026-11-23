@@ -93,6 +93,14 @@ struct ContentView: View {
             .disabled(model.busy || model.pages.isEmpty)
             .keyboardShortcut("s", modifiers: .command)
 
+            // Vista previa junto a escanear / Preview next to scan
+            Button { model.preview() } label: {
+                Label("Vista previa", systemImage: "viewfinder")
+                    .labelStyle(.titleAndIcon)
+            }
+            .help(L("Escaneo rápido para elegir una zona"))
+            .disabled(model.busy || model.targetHost == nil)
+
             Button { model.scanPage() } label: {
                 Label(model.pages.isEmpty ? LocalizedStringKey("Escanear página") : LocalizedStringKey("Agregar página"),
                       systemImage: model.pages.isEmpty ? "doc.viewfinder" : "plus.viewfinder")
@@ -157,12 +165,18 @@ struct Sidebar: View {
                     Text("dpi").foregroundStyle(.secondary)
                 }
                 OptionRow(title: "Modo", systemImage: "paintpalette") {
-                    Picker("Modo", selection: $model.grayscale) {
-                        Text("Color").tag(false)
-                        Text("Gris").tag(true)
+                    Picker("Modo", selection: $model.colorMode) {
+                        ForEach(ColorMode.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
+                }
+                OptionRow(title: "Papel", systemImage: "doc.plaintext") {
+                    Picker("Papel", selection: $model.paper) {
+                        ForEach(PaperSize.allCases) { Text($0.title).tag($0) }
+                    }
+                    .labelsHidden()
+                    .disabled(model.region != nil)
                 }
             }
 
@@ -289,7 +303,9 @@ struct PagesView: View {
         // Sin fondo propio: el fondo estándar sigue las esquinas de la ventana en macOS 26.
         // No custom background: the standard one follows the window corners on macOS 26.
         ZStack {
-            if model.pages.isEmpty && !model.busy {
+            if model.showingPreview, let img = model.previewImage {
+                PreviewSelector(image: img)
+            } else if model.pages.isEmpty && !model.busy {
                 EmptyStateView()
             } else {
                 ScrollView {

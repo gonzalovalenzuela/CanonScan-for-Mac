@@ -29,8 +29,15 @@ struct ScannedPage: Identifiable {
 final class ScanModel: ObservableObject {
     // Opciones / Options
     @Published var dpi = 300
-    @Published var grayscale = false
+    @Published var colorMode: ColorMode = .color
+    @Published var paper: PaperSize = .a4
     @Published var format: OutputFormat = .pdf
+    /// Zona elegida en la vista previa (nil = tamaño de papel) / Region chosen in the preview (nil = paper size)
+    @Published var region: ScanRegion?
+    /// Imagen de la vista previa y si se está mostrando / Preview image and whether it is shown
+    @Published private(set) var previewImage: CGImage?
+    @Published var showingPreview = false
+    static let previewDPI = 75
     // Se guardan y se avisan al puente / Saved and announced to the bridge
     @Published var useManualHost: Bool {
         didSet { UserDefaults.standard.set(useManualHost, forKey: "useManualHost"); SharedSettings.notifyChange() }
@@ -65,8 +72,22 @@ final class ScanModel: ObservableObject {
 
     // MARK: - Escaneo / Scanning
 
-    /// Escanea una página y la decodifica / Scans one page and decodes it
-    private func scanImage(host: String, settings: ScanSettings) async throws -> CGImage {
+    /// Ajustes de escaneo: con zona, se escanea desde la esquina hasta su borde y se recorta.
+    /// Scan settings: with a region, scan from the corner to its edge and crop.
+    private func plan(dpi: Int, color: ColorMode, paper: PaperSize) -> (ScanSettings, ScanRegion?) {
+        var s = ScanSettings(dpi: dpi, grayscale: color.scansGray)
+        if let r = region {
+            s.widthMM = r.x + r.w; s.heightMM = r.y + r.h
+            return (s, r)
+        }
+        (s.widthMM, s.heightMM) = paper.sizeMM
+        return (s, nil)
+    }
+
+    /// Escanea una página, recorta la zona y aplica el color.
+    /// Scans one page, crops the region and applies the color.
+    private func scanImage(host: String, settings: ScanSettings, crop: ScanRegion? = nil,
+                           color: ColorMode = .color) async throws -> CGImage {
         try await Task.detached(priority: .userInitiated) {
             let jpeg = try CHMPClient.scan(host: host, settings: settings) { msg in
                 Task { @MainActor in self.status = msg }
@@ -74,10 +95,40 @@ final class ScanModel: ObservableObject {
             guard var img = ImageTools.decode(jpeg) else {
                 throw CHMPError.protocolError(L("no se pudo leer la imagen escaneada"))
             }
-            if settings.grayscale, let gray = ImageTools.toGray(img) { img = gray }
+            if let crop { img = crop.crop(img, dpi: settings.dpi) }
+            switch color {
+            case .color: break
+            case .gray: if let g = ImageTools.toGray(img) { img = g }
+            case .bw: if let b = ImageTools.toBW(img) { img = b }
+            }
             return img
         }.value
     }
+
+    // MARK: - Vista previa / Preview
+
+    /// Escaneo rápido del vidrio completo para elegir una zona.
+    /// Quick scan of the whole glass to choose a region.
+    func preview() {
+        guard !busy, let host = targetHost else { return }
+        busy = true
+        status = L("Vista previa…")
+        Task {
+            defer { busy = false }
+            do {
+                var s = ScanSettings(dpi: Self.previewDPI, grayscale: false)
+                (s.widthMM, s.heightMM) = (ScanSettings.glassWidthMM, ScanSettings.glassHeightMM)
+                previewImage = try await scanImage(host: host, settings: s)
+                showingPreview = true
+                status = ""
+            } catch {
+                errorMessage = error.localizedDescription
+                status = ""
+            }
+        }
+    }
+
+    func clearRegion() { region = nil }
 
     private static func page(_ img: CGImage, dpi: Int) -> ScannedPage {
         ScannedPage(image: img, dpi: dpi, thumbnail: NSImage(cgImage: img, size: NSSize(width: img.width, height: img.height)))
@@ -88,7 +139,7 @@ final class ScanModel: ObservableObject {
     func scan(mode: ScanMode) {
         guard !busy, let host = targetHost else { return }
         let ms = modes[mode]
-        let settings = ScanSettings(dpi: ms.dpi, grayscale: ms.grayscale)
+        let (settings, crop) = plan(dpi: ms.dpi, color: ms.colorMode, paper: ms.paper)
         busy = true
         status = L("Conectando…")
         Task {
@@ -99,11 +150,11 @@ final class ScanModel: ObservableObject {
                     guard Self.confirm(L("Unir: primera mitad"),
                                        L("Pon la mitad izquierda del original sobre el vidrio, alineada con la esquina."),
                                        ok: L("Escanear")) else { status = ""; return }
-                    let a = try await scanImage(host: host, settings: settings)
+                    let a = try await scanImage(host: host, settings: settings, crop: crop, color: ms.colorMode)
                     guard Self.confirm(L("Unir: segunda mitad"),
                                        L("Gira el original 180° y pon la otra mitad en la misma esquina."),
                                        ok: L("Escanear")) else { status = ""; return }
-                    let b = try await scanImage(host: host, settings: settings)
+                    let b = try await scanImage(host: host, settings: settings, crop: crop, color: ms.colorMode)
                     status = L("Uniendo…")
                     guard let joined = try await Self.background({ DocumentTools.stitch(a, b) }) else {
                         throw CHMPError.protocolError(L("no se pudo leer la imagen escaneada"))
@@ -114,7 +165,7 @@ final class ScanModel: ObservableObject {
                     scanned.append(Self.page(fixed, dpi: ms.dpi))
                 } else {
                     while true {
-                        let img = try await scanImage(host: host, settings: settings)
+                        let img = try await scanImage(host: host, settings: settings, crop: crop, color: ms.colorMode)
                         if ms.deskew || ms.cropToDocument { status = L("Procesando imagen…") }
                         let fixed = try await Self.background {
                             DocumentTools.correct(img, deskew: ms.deskew, crop: ms.cropToDocument)
@@ -205,38 +256,19 @@ final class ScanModel: ObservableObject {
         guard !busy, let host = targetHost else { return }
         busy = true
         status = L("Conectando…")
-        let settings = ScanSettings(dpi: dpi, grayscale: grayscale)
-
-        Task.detached(priority: .userInitiated) {
+        let (settings, crop) = plan(dpi: dpi, color: colorMode, paper: paper)
+        let color = colorMode
+        Task {
+            defer { busy = false }
             do {
-                let jpeg = try CHMPClient.scan(host: host, settings: settings) { msg in
-                    Task { @MainActor in self.status = msg }
-                }
-                guard let page = Self.makePage(jpeg: jpeg, settings: settings) else {
-                    throw CHMPError.protocolError(L("no se pudo leer la imagen escaneada"))
-                }
-                await MainActor.run {
-                    self.pages.append(page)
-                    self.status = L("Página %d lista", self.pages.count)
-                    self.busy = false
-                }
+                let img = try await scanImage(host: host, settings: settings, crop: crop, color: color)
+                pages.append(Self.page(img, dpi: settings.dpi))
+                status = L("Página %d lista", pages.count)
             } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                    self.status = ""
-                    self.busy = false
-                }
+                errorMessage = error.localizedDescription
+                status = ""
             }
         }
-    }
-
-    /// Decodifica el JPEG; en modo gris lo convierte a un canal real.
-    /// Decodes the JPEG; in gray mode converts it to a true single channel.
-    nonisolated private static func makePage(jpeg: Data, settings: ScanSettings) -> ScannedPage? {
-        guard var img = ImageTools.decode(jpeg) else { return nil }
-        if settings.grayscale, let gray = ImageTools.toGray(img) { img = gray }
-        let thumb = NSImage(cgImage: img, size: NSSize(width: img.width, height: img.height))
-        return ScannedPage(image: img, dpi: settings.dpi, thumbnail: thumb)
     }
 
     func remove(_ page: ScannedPage) {

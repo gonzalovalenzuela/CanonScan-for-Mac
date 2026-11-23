@@ -134,3 +134,24 @@
 "Acerca de %@" = "About %@";
 "Escanea por WiFi o USB con impresoras Canon PIXMA G3010 / G3110." = "Scans over Wi-Fi or USB with Canon PIXMA G3010 / G3110 printers.";
 "Procesando imagen…" = "Processing image…";
+
+/* Etapa 1: papel, B/N y vista previa / Stage 1: paper, B/W and preview */
+"B/N" = "B/W";
+"Papel" = "Paper";
+"Carta" = "Letter";
+"Tarjeta" = "Card";
+"Foto 10×15" = "Photo 10×15";
+"Foto 13×18" = "Photo 13×18";
+"Vidrio completo" = "Full glass";
+"Vista previa" = "Preview";
+"Vista previa…" = "Previewing…";
+"Escaneo rápido para elegir una zona" = "Quick scan to choose a region";
+"Arrastra sobre la vista previa para elegir la zona." = "Drag over the preview to choose the region.";
+"Usar zona" = "Use Region";
+"Sin zona" = "No Region";
+"Quitar zona" = "Remove Region";
+"Cerrar" = "Close";
+"Editar" = "Edit";
+"Zona" = "Region";
+"Zona: %@ × %@ mm" = "Region: %@ × %@ mm";
+"%@ × %@ mm" = "%@ × %@ mm";

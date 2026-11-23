@@ -11,6 +11,7 @@ struct ModeBar: View {
     @EnvironmentObject var browser: PrinterBrowser
 
     var body: some View {
+        VStack(spacing: 0) {
         HStack(spacing: 10) {
             ForEach(ScanMode.allCases) { mode in
                 Button { model.scan(mode: mode) } label: {
@@ -34,16 +35,36 @@ struct ModeBar: View {
         }
         .padding(.horizontal, 28)
         .padding(.top, 14)
-        .padding(.bottom, 6)
+        .padding(.bottom, model.region == nil ? 6 : 2)
+        if let r = model.region {
+            // Zona activa / Active region
+            HStack(spacing: 8) {
+                Image(systemName: "viewfinder").foregroundStyle(Color.scanAccent)
+                Text(L("Zona: %@ × %@ mm", Self.mm(r.w), Self.mm(r.h)))
+                Button { model.showingPreview = model.previewImage != nil } label: { Text("Editar") }
+                    .buttonStyle(.borderless)
+                    .disabled(model.previewImage == nil)
+                Button(role: .destructive) { model.clearRegion() } label: { Text("Quitar zona") }
+                    .buttonStyle(.borderless)
+            }
+            .font(.callout)
+            .padding(.horizontal, 28)
+            .padding(.bottom, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        }
     }
+
+    static func mm(_ v: Double) -> String { String(format: "%.0f", v) }
 
     /// Resumen del modo para el tooltip / Mode summary for the tooltip
     private func summary(_ mode: ScanMode) -> String {
         let s = model.modes[mode]
-        let color = s.grayscale ? L("Gris") : L("Color")
+        let color = s.colorMode.title
         let dest = s.reviewBeforeSave ? L("Revisar antes de guardar")
             : (s.saveFolder as NSString).abbreviatingWithTildeInPath
-        return "\(mode.title): \(s.dpi) dpi · \(color) · \(s.format.rawValue) · \(dest)"
+        let area = model.region != nil ? L("Zona") : s.paper.title
+        return "\(mode.title): \(s.dpi) dpi · \(color) · \(area) · \(s.format.rawValue) · \(dest)"
     }
 }
 
@@ -93,9 +114,11 @@ struct ModeForm: View {
     var body: some View {
         Form {
             Section("Escaneo") {
-                Picker("Modo", selection: s.grayscale) {
-                    Text("Color").tag(false)
-                    Text("Gris").tag(true)
+                Picker("Modo", selection: s.colorMode) {
+                    ForEach(ColorMode.allCases) { Text($0.title).tag($0) }
+                }
+                Picker("Papel", selection: s.paper) {
+                    ForEach(PaperSize.allCases) { Text($0.title).tag($0) }
                 }
                 Picker("Resolución", selection: s.dpi) {
                     Text("150 dpi").tag(150)

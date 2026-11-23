@@ -33,7 +33,7 @@ enum ScanMode: String, CaseIterable, Codable, Identifiable {
         case .document:
             s.format = .pdf; s.ocr = true; s.deskew = true; s.cropToDocument = true
         case .photo:
-            s.format = .jpg; s.ocr = false; s.deskew = false; s.cropToDocument = true
+            s.format = .jpg; s.ocr = false; s.deskew = false; s.cropToDocument = true; s.paper = .glass
         case .custom:
             s.format = .pdf; s.ocr = true; s.deskew = false; s.cropToDocument = false
         case .stitch:
@@ -46,7 +46,8 @@ enum ScanMode: String, CaseIterable, Codable, Identifiable {
 extension OutputFormat: Codable {}
 
 struct ModeSettings: Codable, Equatable {
-    var grayscale = false
+    var colorMode: ColorMode = .color
+    var paper: PaperSize = .a4
     var dpi = 300
     var format: OutputFormat = .pdf
     /// PDF con texto buscable / Searchable-text PDF
@@ -60,6 +61,26 @@ struct ModeSettings: Codable, Equatable {
     /// Revisar y elegir dónde guardar / Review and choose where to save
     var reviewBeforeSave = false
     var showInFinder = true
+
+    init() {}
+
+    /// Lee ajustes guardados por versiones anteriores: lo que falta toma su valor inicial.
+    /// Reads settings saved by earlier versions: missing keys take their default.
+    init(from decoder: Decoder) throws {
+        self.init()
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func get<T: Decodable>(_ k: CodingKeys, _ v: inout T) { if let x = try? c.decode(T.self, forKey: k) { v = x } }
+        get(.colorMode, &colorMode); get(.paper, &paper); get(.dpi, &dpi); get(.format, &format)
+        get(.ocr, &ocr); get(.deskew, &deskew); get(.cropToDocument, &cropToDocument)
+        get(.fileName, &fileName); get(.saveFolder, &saveFolder); get(.dateSubfolder, &dateSubfolder)
+        get(.reviewBeforeSave, &reviewBeforeSave); get(.showInFinder, &showInFinder)
+        // Versión 0.2–0.3 guardaba «grayscale» / Versions 0.2–0.3 saved "grayscale"
+        if let legacy = try? decoder.container(keyedBy: LegacyKeys.self),
+           let gray = try? legacy.decode(Bool.self, forKey: .grayscale), gray, !c.contains(.colorMode) {
+            colorMode = .gray
+        }
+    }
+    private enum LegacyKeys: String, CodingKey { case grayscale }
 }
 
 @MainActor

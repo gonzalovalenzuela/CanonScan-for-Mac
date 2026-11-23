@@ -54,6 +54,12 @@ cp -R Resources/en.lproj Resources/es.lproj "$APP/Contents/Resources/"
 codesign --force --sign - --timestamp=none "$BRIDGE"
 codesign --force --sign - --timestamp=none "$APP"
 
+# Que macOS no use las copias de build/ en vez de la de Aplicaciones.
+# Keep macOS from using build/ copies instead of the one in Applications.
+LSR=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+"$LSR" -u "$BRIDGE" 2>/dev/null || true
+"$LSR" -u "$APP" 2>/dev/null || true
+
 # Enlace a la última compilación / Link to the latest build
 ln -sfn "${OUTDIR:t}" build/latest
 echo "OK: $APP"

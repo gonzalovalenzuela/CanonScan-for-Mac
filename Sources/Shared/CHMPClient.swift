@@ -32,8 +32,16 @@ enum CHMPError: LocalizedError {
 
 /// Parámetros de un escaneo / Scan parameters
 struct ScanSettings {
-    var dpi: Int          // 150, 300 o 600
+    var dpi: Int          // 75, 150, 300 o 600
     var grayscale: Bool
+    /// Área a escanear desde la esquina del vidrio, en mm (por defecto A4).
+    /// Area to scan from the glass corner, in mm (A4 by default).
+    var widthMM: Double = 210
+    var heightMM: Double = 297
+
+    /// Tamaño máximo del vidrio de la G3010/G3110 / G3010/G3110 glass maximum
+    static let glassWidthMM = 216.0
+    static let glassHeightMM = 297.0
 }
 
 /// Conexión CHMP bloqueante; usar siempre fuera del hilo principal.
@@ -64,7 +72,7 @@ final class CHMPClient {
 
     /// Escanea con conexión nueva y reintenta si la impresora está ocupada.
     /// Scans on a fresh connection and retries while the printer is busy.
-    static func scan(host: String, settings: ScanSettings, attempts: Int = 4,
+    static func scan(host: String, settings: ScanSettings, attempts: Int = 8,
                      shouldContinue: () -> Bool = { true },
                      progress: (String) -> Void) throws -> Data {
         var attempt = 1
@@ -294,8 +302,10 @@ final class CHMPClient {
 
     /// Comando de parámetros para A4 completo / Parameter command for full A4
     private static func cmdScanParams(_ s: ScanSettings) -> [UInt8] {
-        let width = (Int(210.0 / 25.4 * Double(s.dpi)) + 31) & ~31
-        let height = Int(297.0 / 25.4 * Double(s.dpi))
+        let wmm = min(max(s.widthMM, 10), ScanSettings.glassWidthMM)
+        let hmm = min(max(s.heightMM, 10), ScanSettings.glassHeightMM)
+        let width = (Int(wmm / 25.4 * Double(s.dpi)) + 31) & ~31
+        let height = Int(hmm / 25.4 * Double(s.dpi))
         var d = [UInt8](repeating: 0, count: 0x38)
         d[0x00] = 0x01; d[0x01] = 0x01; d[0x02] = 0x01
         let res = UInt16(s.dpi) | 0x8000
