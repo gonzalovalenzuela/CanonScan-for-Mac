@@ -105,15 +105,20 @@ final class ScanModel: ObservableObject {
                                        ok: L("Escanear")) else { status = ""; return }
                     let b = try await scanImage(host: host, settings: settings)
                     status = L("Uniendo…")
-                    guard let joined = DocumentTools.stitch(a, b) else {
+                    guard let joined = try await Self.background({ DocumentTools.stitch(a, b) }) else {
                         throw CHMPError.protocolError(L("no se pudo leer la imagen escaneada"))
                     }
-                    let fixed = DocumentTools.correct(joined, deskew: ms.deskew, crop: ms.cropToDocument)
+                    let fixed = try await Self.background {
+                        DocumentTools.correct(joined, deskew: ms.deskew, crop: ms.cropToDocument)
+                    }
                     scanned.append(Self.page(fixed, dpi: ms.dpi))
                 } else {
                     while true {
                         let img = try await scanImage(host: host, settings: settings)
-                        let fixed = DocumentTools.correct(img, deskew: ms.deskew, crop: ms.cropToDocument)
+                        if ms.deskew || ms.cropToDocument { status = L("Procesando imagen…") }
+                        let fixed = try await Self.background {
+                            DocumentTools.correct(img, deskew: ms.deskew, crop: ms.cropToDocument)
+                        }
                         scanned.append(Self.page(fixed, dpi: ms.dpi))
                         // PDF: ¿otra página? / PDF: another page?
                         guard ms.format == .pdf,
@@ -123,7 +128,7 @@ final class ScanModel: ObservableObject {
                         else { break }
                     }
                 }
-                try finish(scanned, mode: mode, settings: ms)
+                try await finish(scanned, mode: mode, settings: ms)
             } catch {
                 errorMessage = error.localizedDescription
                 status = ""
@@ -132,12 +137,12 @@ final class ScanModel: ObservableObject {
     }
 
     /// Guarda directo o pasa a revisión / Saves directly or hands over for review
-    private func finish(_ scanned: [ScannedPage], mode: ScanMode, settings ms: ModeSettings) throws {
+    private func finish(_ scanned: [ScannedPage], mode: ScanMode, settings ms: ModeSettings) async throws {
         if ms.reviewBeforeSave {
             pages.append(contentsOf: scanned)
             format = ms.format
             status = L("Página %d lista", pages.count)
-            save(ocr: ms.format == .pdf && ms.ocr, revealInFinder: ms.showInFinder)
+            await saveAsync(ocr: ms.format == .pdf && ms.ocr, revealInFinder: ms.showInFinder)
             return
         }
         var folder = URL(fileURLWithPath: (ms.saveFolder as NSString).expandingTildeInPath, isDirectory: true)
@@ -149,15 +154,16 @@ final class ScanModel: ObservableObject {
         let prefix = ms.fileName.trimmingCharacters(in: .whitespaces).isEmpty ? "IMG" : ms.fileName
         let ext = ms.format.type.preferredFilenameExtension ?? "pdf"
         var saved = [URL]()
+        let items = scanned.map { ($0.image, $0.dpi) }
+        status = ms.format == .pdf && ms.ocr ? L("Reconociendo texto…") : L("Guardando…")
         if ms.format == .pdf {
             let url = Self.nextFile(in: folder, prefix: prefix, ext: ext)
-            status = ms.ocr ? L("Reconociendo texto…") : L("Guardando…")
-            try DocumentTools.writePDF(pages: scanned.map { ($0.image, $0.dpi) }, to: url, ocr: ms.ocr)
+            try await Self.background { try DocumentTools.writePDF(pages: items, to: url, ocr: ms.ocr) }
             saved.append(url)
         } else {
-            for p in scanned {
+            for item in items {
                 let url = Self.nextFile(in: folder, prefix: prefix, ext: ext)
-                try Self.writeImage(p, format: ms.format, to: url)
+                try await Self.background { try Self.writeImage(item.0, dpi: item.1, format: ms.format, to: url) }
                 saved.append(url)
             }
         }
@@ -251,7 +257,13 @@ final class ScanModel: ObservableObject {
 
     // MARK: - Guardado / Saving
 
-    func save(ocr: Bool = false, revealInFinder: Bool = false) {
+    /// Botón Guardar… / Save… button
+    func save() {
+        Task { await saveAsync() }
+    }
+
+    /// Pide destino y escribe en segundo plano / Asks for a destination and writes in the background
+    func saveAsync(ocr: Bool = false, revealInFinder: Bool = false) async {
         guard !pages.isEmpty else { return }
         let panel = NSSavePanel()
         panel.allowedContentTypes = [format.type]
@@ -262,41 +274,54 @@ final class ScanModel: ObservableObject {
             panel.message = L("Se guardará un archivo por página, numerado (-1, -2, …).")
         }
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        // Mantiene «ocupado» si ya venía de un escaneo / Keeps "busy" if it came from a scan
+        let wasBusy = busy
+        busy = true
+        defer { if !wasBusy { busy = false } }
+        let items = pages.map { ($0.image, $0.dpi) }
+        let fmt = format
+        status = fmt == .pdf && ocr ? L("Reconociendo texto…") : L("Guardando…")
         do {
-            switch format {
-            case .pdf:
-                try DocumentTools.writePDF(pages: pages.map { ($0.image, $0.dpi) }, to: url, ocr: ocr)
-            case .jpg, .png:
-                try writeImages(to: url)
+            try await Self.background {
+                switch fmt {
+                case .pdf: try DocumentTools.writePDF(pages: items, to: url, ocr: ocr)
+                case .jpg, .png: try Self.writeImages(items, format: fmt, to: url)
+                }
             }
             status = L("Guardado: %@", url.lastPathComponent)
             if revealInFinder { Self.reveal([url]) }
         } catch {
             errorMessage = L("No se pudo guardar: %@", error.localizedDescription)
+            status = ""
         }
     }
 
-    private func writeImages(to url: URL) throws {
+    /// Ejecuta trabajo pesado fuera del hilo principal / Runs heavy work off the main thread
+    private static func background<T>(_ work: @escaping () throws -> T) async throws -> T {
+        try await Task.detached(priority: .userInitiated, operation: work).value
+    }
+
+    private static func writeImages(_ items: [(CGImage, Int)], format: OutputFormat, to url: URL) throws {
         let base = url.deletingPathExtension()
         let ext = url.pathExtension
-        for (i, p) in pages.enumerated() {
-            let target = pages.count == 1 ? url
+        for (i, item) in items.enumerated() {
+            let target = items.count == 1 ? url
                 : base.deletingLastPathComponent()
                     .appendingPathComponent("\(base.lastPathComponent)-\(i + 1)")
                     .appendingPathExtension(ext)
-            try Self.writeImage(p, format: format, to: target)
+            try writeImage(item.0, dpi: item.1, format: format, to: target)
         }
     }
 
-    private static func writeImage(_ p: ScannedPage, format: OutputFormat, to url: URL) throws {
+    private static func writeImage(_ image: CGImage, dpi: Int, format: OutputFormat, to url: URL) throws {
         guard let dest = CGImageDestinationCreateWithURL(url as CFURL, format.type.identifier as CFString, 1, nil)
         else { throw CocoaError(.fileWriteUnknown) }
         let props: [CFString: Any] = [
-            kCGImagePropertyDPIWidth: p.dpi,
-            kCGImagePropertyDPIHeight: p.dpi,
+            kCGImagePropertyDPIWidth: dpi,
+            kCGImagePropertyDPIHeight: dpi,
             kCGImageDestinationLossyCompressionQuality: 0.9,
         ]
-        CGImageDestinationAddImage(dest, p.image, props as CFDictionary)
+        CGImageDestinationAddImage(dest, image, props as CFDictionary)
         guard CGImageDestinationFinalize(dest) else { throw CocoaError(.fileWriteUnknown) }
     }
 
