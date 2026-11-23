@@ -79,6 +79,10 @@ struct ContentView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        // Impresora en la barra superior / Printer in the top bar
+        ToolbarItem(placement: .navigation) {
+            PrinterToolbarButton()
+        }
         ToolbarItemGroup(placement: .primaryAction) {
             Button(role: .destructive) { model.clear() } label: {
                 Label("Borrar todo", systemImage: "trash")
@@ -122,37 +126,6 @@ struct Sidebar: View {
 
     var body: some View {
         Form {
-            Section("Impresora") {
-                PrinterStatusRow()
-
-                if model.useManualHost {
-                    TextField("Dirección IP", text: $model.manualHost, prompt: Text("192.0.2.10"))
-                        .textFieldStyle(.roundedBorder)
-                } else if browser.printers.count > 1 {
-                    Picker("Impresora", selection: Binding(
-                        get: { model.selectedPrinterID ?? browser.printers.first?.id },
-                        set: { model.selectedPrinterID = $0 }
-                    )) {
-                        ForEach(browser.printers) { p in Text(p.name).tag(Optional(p.id)) }
-                    }
-                    .labelsHidden()
-                }
-
-                HStack {
-                    Toggle("IP manual", isOn: $model.useManualHost.animation())
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                    Spacer()
-                    if !model.useManualHost {
-                        Button { browser.start() } label: {
-                            Label("Buscar de nuevo", systemImage: "arrow.clockwise")
-                        }
-                        .buttonStyle(.borderless)
-                        .disabled(browser.searching)
-                    }
-                }
-            }
-
             Section("Escaneo") {
                 OptionRow(title: "Resolución", systemImage: "rectangle.and.text.magnifyingglass") {
                     Picker("Resolución", selection: $model.dpi) {
